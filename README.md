@@ -76,5 +76,5 @@ Simply populate the captured data from the `DATA-COLLECTION` steps into the appr
 At this stage - you have a baseline. You can manipulate the files as you wish or leave them as a true baseline -  and run the script later and it will fail tests against data that has changed. 
    
 ## Output Examples
-![plot](./img/output1.png)
+![plot](./img/output1.jpg)
 
