@@ -1,5 +1,10 @@
 # RoboWorks
 RoboWorks is a Robotframework test suite specifically for testing, validation and testing of Cisco Crosswork Network Controller [CNC](https://www.cisco.com/c/en/us/products/collateral/cloud-systems-management/crosswork-network-automation/solution-overview-c22-739633.html)
+
+Author|Email
+--|--
+Simon Price|abitpricey@gmail.com
+
 ## Overview
 RoboWorks deviates slightly from standard Robotframework test cases and keyword construction which typically define test cases with a `pass` or `fail` condition by splitting into the test cases into 2 distinct types:
 - Discovery
@@ -8,6 +13,9 @@ and
 
 **Discovery** tests are executed first, and are primarily responsible for collection of key metrics or information from CNC and displaying these as lists in the output report. They will fail if collection fails, but otherwise will present the collected data visually on the report.
 This data is stored (for each test case) as a `suite variable`, making the data available during other test cases (`validation` cases).
+
+### Retrieval Example
+![plot](./img/retrieval-example-1.png)
 
 **Validation** tests are also split into a couple of different types of tests:
 * Validation of the associated `suite variable` data against list (or baseline) of expected results. 
@@ -22,6 +30,20 @@ This makes it very extensible and easy to write new tests but following the form
 
 Once the above is done, running the script will produce captured data in the test result. You can actually just copy this data and put it into the baseline - which makes it very easy to create and modify a new baseline with a new environment / install.
 
+## Installation
+Install is very straight forward. 
+1. Install python
+1. Install Robotframwork via `pip`
+1. Install dependancies via `pip`
+
+### Dependancies
+Module              | Description             
+--------------------|-------------------------
+ Robotframework     | Robotframework base python install
+ robotframework-jsonlibrary | json processing
+ robotframework-requests | requests library for RF
+ robotframework-sshlibrary | SSH (not used)
+
 ## Features
 ### Multiple Environments
 There is a single file `CW_Environments.robot` that supports:
@@ -30,6 +52,8 @@ There is a single file `CW_Environments.robot` that supports:
 - The key name simply maps to a directory location where environment specific baseline content is stored.
 
 Environment File: `Variables/CW_Environments.robot`
+
+> The default OOTB should work with the standard Cisco dCloud demonstration environments for CNC 6/7
 
 ***Credential Example***
 ```json
@@ -76,5 +100,7 @@ Simply populate the captured data from the `DATA-COLLECTION` steps into the appr
 At this stage - you have a baseline. You can manipulate the files as you wish or leave them as a true baseline -  and run the script later and it will fail tests against data that has changed. 
    
 ## Output Examples
-![plot](./img/output1.jpg)
+### Summary Screen
+![plot](./img/summary-1.png)
+### 
 
