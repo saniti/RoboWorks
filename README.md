@@ -1,5 +1,5 @@
 # RoboWorks
-RoboWorks is a Robotframework test suite specifically for testing, validation and testing of Cisco Crosswork Network Controller [CNC](https://www.cisco.com/c/en/us/products/collateral/cloud-systems-management/crosswork-network-automation/solution-overview-c22-739633.html)
+RoboWorks is a Robotframework test suite specifically for testing, validation and documentation of Cisco Crosswork Network Controller [CNC](https://www.cisco.com/c/en/us/products/collateral/cloud-systems-management/crosswork-network-automation/solution-overview-c22-739633.html)
 
 Author|Email
 --|--
@@ -37,12 +37,12 @@ Install is very straight forward.
 1. Install dependancies via `pip`
 
 ### Dependancies
-Module              | Description             
---------------------|-------------------------
- Robotframework     | Robotframework base python install
+Module              		| Description             
+----------------------------|-------------------------
+ Robotframework				| Robotframework base python install
  robotframework-jsonlibrary | json processing
- robotframework-requests | requests library for RF
- robotframework-sshlibrary | SSH (not used)
+ robotframework-requests	| requests library for RF
+ robotframework-sshlibrary	| SSH (not used)
 
 ## Features
 ### Multiple Environments
@@ -62,12 +62,12 @@ ${admin_default}  Set Variable	{"username":"admin","password":"MyCNCPasswordGoes
      
 ***Environment Example***
 ```json
-set to dictionary  ${CW_ENDPOINTS}  cnclabdemo  {"host":"cnclabdemo","protocol":"https","port":"30605","auth":${admin_default}}
+set to dictionary  ${CW_ENDPOINTS}  cnclab-dcloud  {"host":"cnclabdemo","protocol":"https","port":"30605","auth":${admin_default}}
 ```
 Once a new environment has been created, you can either:
 - Change the `cnc.robot` file to point to the new name by changing this parameter:
 ```html
-${ENV}	cnclab
+${ENV}	cnclab-dcloud
 ```
 - Run the test script passing the appropriate environment variable
 ```bash
@@ -81,26 +81,52 @@ Baselines can easily be created for a new environment by simply adding the envir
 
 This will `fail` all of the validation tests - but that's ok, because we have now captured all the necessary data to populate our baseline!
 
-Baseline data is stored in files under `Suites\baseline\ENV\<environment>`
+Baseline data is stored in files under `Suites\crosswork\ENV\<environment>`
 
 Current, the test support validation of the following baseline data sets:
- File               | Description             
---------------------|-------------------------
- cw-apps.txt        | CNC Applications        
- cw-credentials.txt | CNC Credential Policies 
- cw-devices.txt     | CNC Devices             
- cw-images.txt      | CNC Images (SWIM)       
- cw-platform.txt    | CNC Platform            
- cw-providers.txt   | CNC Providers           
- cw-services.txt    | CNC Network Services    
- dgw-hosts.txt      | CNC Data Gateway        
- syslog.txt         | CNC Syslog definitions  
+ Keyword               		| Description             
+----------------------------|-------------------------
+ cnc-apps.txt        		| CNC Applications        
+ cnc-credentials.txt 		| CNC Credential Policies 
+ cnc-devices.txt     		| CNC Devices             
+ cnc-images.txt      		| CNC Images (SWIM)       
+ cnc-platform.txt    		| CNC Platform            
+ cnc-providers.txt   		| CNC Providers           
+ cnc-nso-service-types.txt	| CNC Network Services     
+ cnc-cdg.txt				| CNC Data Gateway        
+ cnc-syslog.txt				| CNC Syslog definitions  
 
 Simply populate the captured data from the `DATA-COLLECTION` steps into the appropriate text file. Next run - this will validate the data and you should see a pass. 
 At this stage - you have a baseline. You can manipulate the files as you wish or leave them as a true baseline -  and run the script later and it will fail tests against data that has changed. 
-   
+
+### Data captured during `DATA-COLLECTION` steps
+The `cnc.robot` file contains the test cases that are execute, are all tagged. 
+`DATA-COLLECTION` - where data is simply collected/collated and stored in a `suite variable`. Data from this variable can be used during a validation test case, or presented just as an FYI. 
+`VALIDATION` - where collected data is used to validate against a file, or some other measure. 
+
+ Keyword               		| Data Collected             
+----------------------------|-------------------------
+ get-cnc-platform        		| SchemaVersion / CNC_VM_Image / ClusterIPStack / ManagementVIP /  ManagementIPNetmask / ManagementIPGateway / DataVIP / DataIPNetmask / DataIPGateway / DomainName / NTP / DNS / RamDiskSize / ThinProvisioned / Timezone
+ get-service-types 		| NSO Service packages 
+ get-cnc-services     		| serviceType /  serviceName / provisioningState
+ get-cnc-transport      		| serviceType /  serviceName / provisioningState  
+ get-syslog-dest   		| host / port / criteria     
+ get-data-gw  		| version / adminState / profileType / interface name / interface inetAddr / interface mask / config cpu / config memory / config nics / operational operState
+ get-swim-images	| name / version / family / vendor
+ get-cnc-devices				| host_name / reachability_state / operational_state / profile / node_ip / product_info / software_type / product_info / software_version
+ get-device-alerts			| [device alerts] device_id / impact_score / [kpi_alerts] device_id / impact_score
+ get-cnc-credentials			| profile / user_name / type
+ get-cnc-providers			| name / reachability_state / ..all details..
+ get-system-alarms			| AlarmCategory / Description / events_count
+ get-device-alarms			| displayName / severity / eventType / srcObjectDisplayName
+ get-kpis			| category / kpi_name / sensor_type / ..count of KPIs..
+ get-application-versions			| application_data / application_id / version 
+ get-application-health			| obj_name (Healthy) / obj_name (Degraded)
+
+
 ## Output Examples
 ### Summary Screen
+> Failure on one data collection activity
 ![plot](./img/summary-1.png)
 ### 
 

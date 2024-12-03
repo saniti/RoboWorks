@@ -8,5 +8,5 @@ node-5|CONN_STATE_REACHABLE:ROBOT_OPER_STATE_OK:demo:{'inet_af': 'ROBOT_INET_ADD
 node-6|CONN_STATE_REACHABLE:ROBOT_OPER_STATE_OK:demo:{'inet_af': 'ROBOT_INET_ADDR_TYPE_v4', 'inet_addr': '198.19.1.6', 'mask': '32'}:IOS XR:24.2.1
 cpe-14.nso-topology|CONN_STATE_REACHABLE:ROBOT_OPER_STATE_OK:demo-cpe:{'inet_af': 'ROBOT_INET_ADDR_TYPE_v4', 'inet_addr': '198.18.1.54', 'mask': '32'}:IOS XE:15.6(2)T
 cpe-11.nso-topology|CONN_STATE_REACHABLE:ROBOT_OPER_STATE_OK:demo-cpe:{'inet_af': 'ROBOT_INET_ADDR_TYPE_v4', 'inet_addr': '198.18.1.51', 'mask': '32'}:IOS XE:15.6(2)T
-cpe-12.nso-topology|CONN_STATE_REACHABLE:ROBOT_OPER_STATE_OK:demo-cpe:{'inet_af': 'ROBOT_INET_ADDR_TYPE_v4', 'inet_addr': '198.18.1.52', 'mask': '32'}:IOS XE:15.6(2)T
+cpe-12.nso-topology|CONN_STATE_REACHABLE:ROBOT_OPER_STATE_OK:demo-cpe:{'inet_af': 'ROBOT_INET_ADDR_TYPE_v4', 'inet_addr': '198.18.1.54', 'mask': '32'}:IOS XE:15.6(2)T
 cpe-13.nso-topology|CONN_STATE_REACHABLE:ROBOT_OPER_STATE_OK:demo-cpe:{'inet_af': 'ROBOT_INET_ADDR_TYPE_v4', 'inet_addr': '198.18.1.53', 'mask': '32'}:IOS XE:15.6(2)T
