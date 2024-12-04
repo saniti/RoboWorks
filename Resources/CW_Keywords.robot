@@ -122,6 +122,49 @@ validate-cnc-platform
 
 	Set Test Variable    ${MSG}    ${MSG}\nAll tests passed. Failures:${FAIL_COUNT}
 
+get-cnc-nodes
+	[Documentation]			Retrieves current running information on the CNC nodes
+	...						\nSuite Variables: ``CNC_NODES``
+	...						
+	...                     \nAuthor: Simon Price
+	...                     \nUpdate: 2024-12-02
+	
+    ${myurl}  Set Variable   /crosswork/platform/v2/cluster/dc/node/summary/list
+	${headers}  Create Dictionary
+	set to dictionary  ${headers}  Content-type=application/json
+	set to dictionary  ${headers}  Authorization=Bearer ${token}
+	
+	@{CNC_NODES}=    Create List
+	@{CNC_NODES_HEALTH}=    Create List	
+	
+	@{FIELDS}=	Create List	vm_name	node_id		node_type	node_resource.cpu_summary.total	node_resource.memory_summary.total	node_resource.disk_summary.total
+	
+    ${description}  set variable    ${TEST NAME}
+	
+    ${response}   GET On Session  cw  ${myurl}  headers=${headers}	expected_status=200
+
+    ${json_response}    evaluate  json.loads($response.text)    json
+	Set Test Variable    ${MSG}	--CNC Node Info--\n
+	
+	FOR  ${data}  IN  @{json_response['node_summary']}
+		
+		${key}  Set Variable   ${data['node_name']}
+		
+		FOR  ${item}  IN  @{FIELDS}
+			${search}	Set Variable 	$.${item}
+			
+			${values}	Get Value From Json   ${data}    ${search}
+
+			Set Test Variable    ${MSG}    ${MSG}${key}|${item}:${values}\n
+			Append To List  ${CNC_NODES}	${key}|${item}:${values}
+			
+		END 
+		
+	END
+
+	Set Suite Variable  ${CNC_NODES}	
+	Set Suite Variable  ${CNC_NODES_HEALTH}	
+
 get-cnc-entitlement
 	[Documentation]			Retrieves CNC Entitlements
 	...						\nSuite Variables: ``CNC_ENTITLEMENTS``
@@ -663,8 +706,8 @@ get-cnc-cdg-pools
 		FOR  ${item}  IN  @{FIELDS_VIP}
 			${search}	Set Variable 	$..${item}
 			${values}	Get Value From Json    ${data['virtualIPs']}    ${search}
-			Set Test Variable    ${MSG}    ${MSG}${cdg}:${item}:${values[0]}\n
-			Append To List  ${CNC_DATAGW_POOL}	${cdg}:${item}:${values[0]}
+			Set Test Variable    ${MSG}    ${MSG}${cdg}:${item}:${values}\n
+			Append To List  ${CNC_DATAGW_POOL}	${cdg}:${item}:${values}
 		END		
 
 
@@ -720,7 +763,7 @@ validate-cnc-cdg-pools
 
 	Set Test Variable    ${MSG}    ${MSG}\nAll tests passed. Failures:${FAIL_COUNT}
 
-get-swim-images
+DEPRECATED-get-swim-images
 	[Documentation]			Retrieves CNC SWIM/Image info from /crosswork/rs/json/SwimRepositoryRestService/getImagesForRepository
 	...						\nSuite Variables: ``CNC_SWIM_IMAGES``
 	...                       
@@ -753,6 +796,64 @@ get-swim-images
 	END	
 
 	Set Suite Variable  ${CNC_SWIM_IMAGES}	
+
+get-swim-images
+	[Documentation]			Retrieves CNC SWIM/Image info from /crosswork/rs/json/SwimRepositoryRestService/getImagesForRepository
+	...						\nSuite Variables: ``CNC_SWIM_IMAGES``
+	...                       
+	...                     \nAuthor: Simon Price
+	...                     \nUpdate: 2024-12-02
+	
+    ${myurl}  Set Variable   status
+	${headers}  Create Dictionary
+	set to dictionary  ${headers}  Content-type=application/json
+	set to dictionary  ${headers}  Authorization=Bearer ${token}
+	
+    ${description}  set variable    ${TEST NAME}
+	@{CNC_SWIM_IMAGES}=    Create List	
+    ${myurl}  Set Variable   /crosswork/rs/json/SwimRepositoryRestService/getImagesForRepository/
+
+	${payload}	Set Variable	{}
+	${payload_json}	evaluate  json.loads($payload)    json
+
+    ${response}   GET On Session  cw  ${myurl}  headers=${headers}	expected_status=206	json=${payload_json}
+
+    ${json_response}    evaluate  json.loads($response.text)    json
+	
+	@{CNC_SWIM_IMAGES}=    Create List
+	@{CNC_NODES_HEALTH}=    Create List	
+	
+	@{FIELDS}=	Create List	name	imageName	version	family	vendor	imagePlatform
+	
+ 	Set Test Variable    ${MSG}	--CNC Images--\n
+	
+	${count}  Set Variable   ${json_response['softwareImageListDTO']['totalCount']}
+	
+	IF	${count} > 0
+	
+		FOR  ${data}  IN  @{json_response['softwareImageListDTO']['items']}
+		
+			Log	${data}
+			
+			${key}  Set Variable   ${data['name']}
+			
+			FOR  ${item}  IN  @{FIELDS}
+				${search}	Set Variable 	$.${item}
+				
+				${values}	Get Value From Json   ${data}    ${search}
+
+				Set Test Variable    ${MSG}    ${MSG}${key}|${item}:${values}\n
+				Append To List  ${CNC_SWIM_IMAGES}	${key}|${item}:${values}
+				
+			END 
+			
+		END
+	ELSE 
+		Set Test Variable    ${MSG}    ${MSG}Image Count:${count}
+	END 
+	
+	Set Suite Variable  ${CNC_SWIM_IMAGES}	
+	
 
 validate-swim-images
 	[Documentation]			Validates the SWIM images based on the suite variable of ``CNC_SWIM_IMAGES``
@@ -807,7 +908,7 @@ validate-swim-images
 
 	Set Test Variable    ${MSG}    ${MSG}\nAll tests passed. Failures:${FAIL_COUNT}
 
-get-cnc-devices
+DEPRECATED-get-cnc-devices
 	[Documentation]			Retrieves CNC device information from /crosswork/inventory/v1/nodes/query
 	...						\nSuite Variables: ``CNC_DEVICES``
 	...                       
@@ -836,7 +937,6 @@ get-cnc-devices
 	
 	FOR  ${item}  IN  @{json_response['data']}
 		log	${item}
-		
 	
 		Set Test Variable    ${MSG}    ${MSG}\n${item['host_name']}|${item['reachability_state']}:${item['operational_state']}:${item['profile']}:${item['node_ip']}:${item['product_info']['software_type']}:${item['product_info']['software_version']}
 
@@ -845,6 +945,64 @@ get-cnc-devices
 
 	Set Suite Variable  ${CNC_DEVICES}	
 
+get-cnc-devices
+	[Documentation]			Retrieves CNC device information from /crosswork/inventory/v1/nodes/query
+	...						\nSuite Variables: ``CNC_DEVICES``
+	...                       
+	...                     \nAuthor: Simon Price
+	...                     \nUpdate: 2024-12-02
+	
+    ${myurl}  Set Variable   status
+	${headers}  Create Dictionary
+	set to dictionary  ${headers}  Content-type=application/json
+	set to dictionary  ${headers}  Authorization=Bearer ${token}
+	
+    ${description}  set variable    ${TEST NAME}
+	@{CNC_DEVICES}=    Create List
+	@{CNC_DEVICES_HEALTH}=    Create List
+	
+	@{FIELDS_DATA}=	Create List		profile	dg_name	reachability_check	product_info.software_type	product_info.software_version	product_info.manufacturer	connectivity_info..type	connectivity_info..port	connectivity_info..ipaddrs	providers_family
+	@{FIELDS_DATA_HEALTH}=	Create List	admin_state	operational_state	reachability_state	nso_state	errors
+	@{FIELDS_EVENTS}=	Create List	alarm_id
+	
+    ${myurl}  Set Variable   /crosswork/inventory/v1/nodes/query
+
+	${payload}	Set Variable	{}
+	${payload_json}	evaluate  json.loads($payload)    json
+
+    ${response}   POST On Session  cw  ${myurl}  headers=${headers}	expected_status=200	json=${payload_json}
+
+    ${json_response}    evaluate  json.loads($response.text)    json
+
+	log	${json_response}
+	
+	Set Test Variable    ${MSG}    --Devices--\n	
+	
+	FOR  ${data}  IN  @{json_response['data']}
+	
+		Log	${data}
+		
+		${key}	Get Value From Json    ${data}    $.host_name
+	
+		FOR  ${item}  IN  @{FIELDS_DATA}
+			${search}	Set Variable 	$.${item}
+			${values}	Get Value From Json    ${data}    ${search}
+			Set Test Variable    ${MSG}    ${MSG}${key}:${item}:${values}\n
+			Append To List  ${CNC_DEVICES}	${key}:${item}:${values}
+		END
+		
+		FOR  ${item}  IN  @{FIELDS_DATA_HEALTH}
+			${search}	Set Variable 	$.${item}
+			${values}	Get Value From Json    ${data}    ${search}
+			#Set Test Variable    ${MSG}    ${MSG}${key}:${item}:${values}\n
+			Append To List  ${CNC_DEVICES_HEALTH}	${key}:${item}:${values}
+		END		
+
+	END	
+	Log List  ${CNC_DEVICES_HEALTH}
+	Set Suite Variable  ${CNC_DEVICES}	
+	Set Suite Variable  ${CNC_DEVICES_HEALTH}	
+	
 validate-cnc-devices
 	[Documentation]			Validates the CNC services/applications based on the suite variable of ``CNC_DEVICES``
 	...                       
@@ -899,6 +1057,61 @@ validate-cnc-devices
 
 	Set Test Variable    ${MSG}    ${MSG}\nAll tests passed. Failures:${FAIL_COUNT}
 
+validate-cnc-device-health
+	[Documentation]			Validates the CNC services/applications based on the suite variable of ``CNC_DEVICES_HEALTH``
+	...                       
+	...						\nValidation file(s): cnc-device-health.txt
+	...                     \nAuthor: Simon Price
+	...                     \nUpdate: 2024-12-02
+	
+	@{FAIL}=    Create List	
+	@{PASS}=    Create List	
+	@{PASS-REV}=    Create List		
+	@{FAIL-REV}=    Create List	
+
+	#${RESP}  Run Keyword And Ignore Error	Load Data from File  ${BASE}${/}ENV${/}${ENV}${/}cnc-device-health.txt
+	
+	@{VALIDATE_LIST}=    Create List	DOWN	UNREACHABLE	ERROR	DEGRADED	errors
+	#@{VALIDATE_LIST}=    Create List	errors	
+
+	
+	Set Test Variable    ${MSG}	--Validate CNC Device Health--\n
+	
+	
+	FOR  ${iter}  IN  @{CNC_DEVICES_HEALTH}
+		Log 	${iter}
+		
+		FOR  ${validate}  IN  @{VALIDATE_LIST}
+
+			${RESP}	Run Keyword and Ignore Error	Should Contain	${iter}	${validate}
+			
+			IF  "${RESP}[0]" == "PASS"	
+				Log	Checking if errors:[] is equal to ${iter}
+				
+				${equal}  Run Keyword And Ignore Error	Should Not Contain	${iter}	errors:[]	
+				
+				IF  "${equal}[0]" == "PASS"	
+					Set Test Variable    ${MSG}    ${MSG}${FAILX}: [${ENV}]:${iter}\n	
+					Append To List  ${FAIL}  ---					
+					Set Tags	${RESP}[0]				
+				END
+
+			END
+		END 
+	END
+	
+	${FAIL_COUNT}=  Get Length  ${FAIL}
+	${FAIL_COUNT_REV}=  Get Length  ${FAIL-REV}
+	
+	Log List  ${PASS}
+	Log List  ${FAIL}	
+	Log List  ${FAIL-REV}
+	
+	Run Keyword If  ${FAIL_COUNT} > 0  
+	...  fail  Failures were seen on one or more devices.	
+	
+	Set Test Variable    ${MSG}    ${MSG}\nNo device errors detect. Errors:${FAIL_COUNT}
+	
 validate-nso-service-types
 	[Documentation]			Validates the running NSO service types based on the suite variable of ``CNC_SERVICE_TYPES``
 	...                       
@@ -1111,7 +1324,7 @@ get-cnc-credentials
 	END	
 	Set Suite Variable  ${CNC_CREDENTIALS}
 
-get-cnc-providers
+DEPRECATED-get-cnc-providers
 	[Documentation]			Retrieves CNC Providers (first 100)
 	...						\nSuite Variables: ``CNC_PROVIDERS`` 
 	...						\nValidation file(s): none
@@ -1150,6 +1363,55 @@ get-cnc-providers
 	END	
 	
 	Set Suite Variable  ${CNC_PROVIDERS}	
+
+get-cnc-providers
+	[Documentation]			Retrieves CNC Providers (first 100)
+	...						\nSuite Variables: ``CNC_PROVIDERS`` 
+	...						\nValidation file(s): none
+	...                     \nAuthor: Simon Price
+	...                     \nUpdate: 2024-12-03
+	
+	${headers}  Create Dictionary
+	set to dictionary  ${headers}  Content-type=application/json
+	set to dictionary  ${headers}  Authorization=Bearer ${token}
+	
+	${myurl}  Set Variable   /crosswork/inventory/v1/providers/query
+	${payload}	Set Variable	{"limit":100,"next_from":"0","filter":{}}
+
+	${json_payload}	evaluate  json.loads($payload)    json
+	
+	@{CNC_PROVIDERS}=    Create List
+	@{CNC_NODES_HEALTH}=    Create List	
+	
+	@{FIELDS}=	Create List	profile	connectivity_info..port	connectivity_info..timeout	connectivity_info..type	connectivity_info..ipaddrs
+	
+    ${description}  set variable    ${TEST NAME}
+
+    ${response}   POST On Session  cw  ${myurl}  headers=${headers}	expected_status=200
+
+    ${json_response}    evaluate  json.loads($response.text)    json
+	Set Test Variable    ${MSG}	--Providers--\n
+	
+	FOR  ${data}  IN  @{json_response['data']}
+	
+		Log	${data}
+		
+		${key}  Set Variable   ${data['name']}
+		
+		FOR  ${item}  IN  @{FIELDS}
+			${search}	Set Variable 	$.${item}
+			
+			${values}	Get Value From Json   ${data}    ${search}
+
+			Set Test Variable    ${MSG}    ${MSG}${key}|${item}:${values}\n
+			Append To List  ${CNC_PROVIDERS}	${key}|${item}:${values}
+			
+		END 
+		
+	END
+
+	Set Suite Variable  ${CNC_PROVIDERS}	
+	#Set Suite Variable  ${CNC_NODES_HEALTH}	
 
 DEPRECATED-get-system-alarms
 	[Documentation]			DEPRECATED do not use

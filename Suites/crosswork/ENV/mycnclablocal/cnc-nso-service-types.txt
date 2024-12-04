@@ -1,0 +1,7 @@
+TRANSPORT:Tunnel
+TRANSPORT:ODN-Template
+TRANSPORT:Policy
+TRANSPORT:Circuit-Style Policy
+NETWORK_SLICE:NSS
+VPN:L3VPN-Service
+VPN:L2VPN-Service

@@ -1,0 +1,7 @@
+capp-ca:7.0.0-rc.62+build.65
+capp-hi:7.0.0-rc.60+build.62
+capp-common-ems-services:7.0.0-rc.760+build.767
+capp-aa:7.0.0-rc.71+build.77
+capp-cat:7.0.0-rc.65+build.68
+capp-coe:7.0.0-rc.73+build.78
+capp-infra:7.0.0-rc.73+build.85
