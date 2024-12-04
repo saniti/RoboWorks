@@ -1,6 +1,0 @@
-capp-hi:4.1.0-rc.22+build.24
-capp-ca:4.1.0-rc.21+build.22
-capp-cat:3.0.1-rc.3+build.4
-capp-coe:3.0.1-rc.3+build.4
-capp-ztp:3.0.1-rc.6+build.5
-capp-infra:4.1.2-rc.23+build.44
