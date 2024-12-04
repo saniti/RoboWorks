@@ -1,6 +1,0 @@
-capp-cat:4.0.0-prerelease.116+build.199
-capp-ztp:4.0.0-prerelease.2+build.206
-capp-hi:4.3.0-prerelease.52+build.206
-capp-coe:4.0.0-prerelease.422+build.211
-capp-ca:4.3.0-prerelease.36+build.220
-capp-infra:4.3.0-prerelease.195+build.191

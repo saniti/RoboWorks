@@ -1,6 +1,0 @@
-ron-ml:{http://cisco.com/ns/nso/cfp/cisco-ron}ron-ml
-ietf-l2vpn:{urn:ietf:params:xml:ns:yang:ietf-l2vpn-ntw}vpn-service
-odn-template:{http://cisco.com/ns/nso/cfp/cisco-tsdn-sr-te-sr-odn}odn-template
-ietf-l3vpn:{urn:ietf:params:xml:ns:yang:ietf-l3vpn-ntw}vpn-service
-tunnel:{urn:ietf:params:xml:ns:yang:ietf-te}tunnel
-policy:{http://cisco.com/ns/nso/cfp/cisco-ts-sr-policies}policy
