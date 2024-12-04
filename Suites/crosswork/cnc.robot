@@ -20,7 +20,7 @@ Suite Teardown         	Suite Teardown
 
 *** Variables ***
 ${BASE}	${CURDIR}
-${ENV}	dcloud-demo
+${ENV}	dclouddemo
 ${PASSX}	PASS
 ${FAILX}	**FAIL
 
@@ -31,10 +31,17 @@ Logon CNC
 	[Tags]  SETUP-TASKS	AUTH
 	[setup]    Set Test Variable    ${MSG}    ENVIRONMENT:${ENV}\n   	
 	[teardown]    Set Test Message    ${MSG}\n${TEST MESSAGE}
-	#Logon to CNC	${CW_ENDPOINTS["${ENV}"]}
-	${data}  set variable  ${CW_ENDPOINTS["${ENV}"]}
-	${logon}=  Run Keyword And Return Status  Logon to CNC	${CW_ENDPOINTS["${ENV}"]}
-	Run Keyword If  not ${logon}  Fatal Error	Failed to authenticate to ${data} or is not reacheable. Terminating test suite.
+	
+	${RESP}  Run Keyword and Ignore Error  set variable  ${CW_ENDPOINTS["${ENV}"]}
+
+	Log	${CW_ENDPOINTS}
+
+	IF	"${RESP}[0]" == "PASS"
+		${logon}=  Run Keyword And Return Status  Logon to CNC	${CW_ENDPOINTS["${ENV}"]}
+		Run Keyword If  not ${logon}  Fatal Error	Failed to authenticate to ${data} or is not reacheable. Terminating test suite.
+	ELSE
+		Fatal Error	Unable to resolve ENVIRONMENT:${ENV}. Terminating test suite.
+	END
 		
 Get Current Time
 	[Documentation]	Get a suite wide date and time to use as a unique identifier
@@ -131,7 +138,14 @@ Retrieve CNC Data Gateway
 	[Tags]  DATA-COLLECTION	DATA_GATEWAY
 	[setup]    Set Test Variable    ${MSG}    ${EMPTY}    	
 	[teardown]    Set Test Message    ${MSG}\n${TEST MESSAGE}    
-	${RESP}  get-data-gw
+	${RESP}  get-cnc-cdg
+	
+Retrieve CNC Data Gateway Pools
+	[Documentation]	Find Data Gateway Pool information
+	[Tags]  DATA-COLLECTION	DATA_GATEWAY
+	[setup]    Set Test Variable    ${MSG}    ${EMPTY}    	
+	[teardown]    Set Test Message    ${MSG}\n${TEST MESSAGE}    
+	${RESP}  get-cnc-cdg-pools	
 
 Retrieve CNC Syslog Destinations
 	[Documentation]	Find all the remote syslog destinations
@@ -139,6 +153,13 @@ Retrieve CNC Syslog Destinations
 	[setup]    Set Test Variable    ${MSG}    ${EMPTY}    	
 	[teardown]    Set Test Message    ${MSG}\n${TEST MESSAGE}    
 	${RESP}  get-syslog-dest
+
+Retrieve CNC Entitlements
+	[Documentation]	Find CNC Entitlements and RTM
+	[Tags]  DATA-COLLECTION	LICENSING
+	[setup]    Set Test Variable    ${MSG}    ${EMPTY}    	
+	[teardown]    Set Test Message    ${MSG}\n${TEST MESSAGE}    
+	${RESP}  get-cnc-entitlement
 
 Retrieve CNC Software Images
 	[Documentation]	Find Software Images (SWIM)
@@ -153,6 +174,27 @@ Validate CNC Data Gateway
 	[setup]    Set Test Variable    ${MSG}    ${EMPTY}    	
 	[teardown]    Set Test Message    ${MSG}\n${TEST MESSAGE}    
 	${RESP}  validate-cnc-cdg
+
+Validate CNC Data Gateway Pools
+	[Documentation]	Validate the configured CDG Pool is correct as per file spec [cnc-cdg-pools.txt]
+	[Tags]  VALIDATE	DATA_GATEWAY
+	[setup]    Set Test Variable    ${MSG}    ${EMPTY}    	
+	[teardown]    Set Test Message    ${MSG}\n${TEST MESSAGE}    
+	${RESP}  validate-cnc-cdg-pools
+
+Validate CNC Entitlements
+	[Documentation]	Validate CNC Entitlements and RTM as per file spec [cnc-entitlements.txt]
+	[Tags]  VALIDATE	LICENSING
+	[setup]    Set Test Variable    ${MSG}    ${EMPTY}    	
+	[teardown]    Set Test Message    ${MSG}\n${TEST MESSAGE}    
+	${RESP}  validate-cnc-entitlement
+
+Validate CNC Data Gateway Health
+	[Documentation]	Validate the operational state of the CDG(s) as per file spec [cnc-cdg-health.txt]
+	[Tags]  VALIDATE	DATA_GATEWAY
+	[setup]    Set Test Variable    ${MSG}    ${EMPTY}    	
+	[teardown]    Set Test Message    ${MSG}\n${TEST MESSAGE}    
+	${RESP}  validate-cnc-cdg-health
 
 Validate Platform Summary	
 	[Documentation]	Validate key information on CNC Platform and hosting as per file spec [cnc-platform.txt]
@@ -174,7 +216,21 @@ Validate NSO Service Types
 	[setup]    Set Test Variable    ${MSG}    ${EMPTY}    	
 	[teardown]    Set Test Message    ${MSG}\n${TEST MESSAGE}    
 	${RESP}  validate-nso-service-types	
-	
+
+Validate CNC/NSO Services
+	[Documentation]	Validate implemented networks services are correct as per the file spec [cnc-services.txt]
+	[Tags]  VALIDATE	SERVICES
+	[setup]    Set Test Variable    ${MSG}    ${EMPTY}    	
+	[teardown]    Set Test Message    ${MSG}\n${TEST MESSAGE}    
+	${RESP}  validate-cnc-services	
+
+Validate CNC/NSO Transport
+	[Documentation]	Validate implemented transport are correct as per the file spec [cnc-services.txt]
+	[Tags]  VALIDATE	SERVICES
+	[setup]    Set Test Variable    ${MSG}    ${EMPTY}    	
+	[teardown]    Set Test Message    ${MSG}\n${TEST MESSAGE}    
+	${RESP}  validate-cnc-transport	
+
 Validate CNC Credentials
 	[Documentation]	Validate CNC credentials are correct as per the file spec [cnc-credentials.txt]
 	[Tags]  VALIDATE	CREDENTIALS

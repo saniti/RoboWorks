@@ -1,0 +1,4 @@
+Policy:demo-l2vpn-tldp_c_2003_ep_node-1:SUCCESS
+Policy:demo-l2vpn-tldp_c_2003_ep_node-3:SUCCESS
+ODN-Template:odn_SRv6_low_latency_6003:SUCCESS
+ODN-Template:odn_SRv6_te_6002:SUCCESS

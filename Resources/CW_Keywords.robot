@@ -81,6 +81,9 @@ validate-cnc-platform
 	@{FAIL-REV}=    Create List	
 
 	${RESP}  Run Keyword And Ignore Error	Load Data from File  ${BASE}${/}ENV${/}${ENV}${/}cnc-platform.txt
+	
+	Set Test Variable    ${MSG}	--Validate CNC Platform--\n
+	
 	IF	"${RESP}[0]" == "PASS"
 		${appsVALID}	Set Variable	${RESP}[1]
 		@{appsVALID}=    Split to lines  ${appsVALID}
@@ -88,7 +91,7 @@ validate-cnc-platform
 		FOR  ${item}  IN  @{appsVALID}
 			# Positive
 			${RESP}=  Run Keyword And Ignore Error  List Should Contain Value  ${CNC_PLATFORM}  ${item}
-			Set Test Variable    ${MSG}    ${MSG}\n${${RESP}[0]X}: [${ENV}]:${item}		
+			Set Test Variable    ${MSG}    ${MSG}${${RESP}[0]X}: [${ENV}]:${item}\n		
 			Append To List  ${${RESP}[0]}  ${RESP}[0]:${item}:App found in validation list, but not in system
 			Set Tags	${RESP}[0]
 		END
@@ -98,7 +101,102 @@ validate-cnc-platform
 	FOR  ${item}  IN  ${CNC_PLATFORM}
 		${RESP}=  Run Keyword And Ignore Error  List Should Contain Value  ${appsVALID}  ${item}
 		IF  "${RESP}[0]" == "FAIL"	
-			Set Test Variable    ${MSG}    ${MSG}\nWARN: ${item} Not in valid list.
+			Set Test Variable    ${MSG}    ${MSG}WARN: ${item} Not in valid list.\n
+			Append To List  ${${RESP}[0]-REV}  ${RESP}[0]:${item}
+			
+		END
+	END		
+
+	${FAIL_COUNT}=  Get Length  ${FAIL}
+	${FAIL_COUNT_REV}=  Get Length  ${FAIL-REV}
+	
+	Log List  ${PASS}
+	Log List  ${FAIL}	
+	Log List  ${FAIL-REV}
+	
+	Run Keyword If  ${FAIL_COUNT} > 0  
+	...  fail  Differences between detected and actual applications were encountered.	
+	
+	Run Keyword If  ${FAIL_COUNT_REV} > 0  
+	...  pass execution  There are applications running that are not in the valid list.	
+
+	Set Test Variable    ${MSG}    ${MSG}\nAll tests passed. Failures:${FAIL_COUNT}
+
+get-cnc-entitlement
+	[Documentation]			Retrieves CNC Entitlements
+	...						\nSuite Variables: ``CNC_ENTITLEMENTS``
+	...						
+	...                     \nAuthor: Simon Price
+	...                     \nUpdate: 2024-12-02
+	
+    ${myurl}  Set Variable   /crosswork/clms/v1/onboard-list
+	${headers}  Create Dictionary
+	set to dictionary  ${headers}  Content-type=application/xml
+	set to dictionary  ${headers}  Authorization=Bearer ${token}
+	
+	@{CNC_ENTITLEMENTS}=    Create List	
+	
+	@{FIELDS}=	Create List		name	version
+	
+    ${description}  set variable    ${TEST NAME}
+	
+    ${response}   GET On Session  cw  ${myurl}  headers=${headers}	expected_status=200
+
+    ${json_response}    evaluate  json.loads($response.text)    json
+	Set Test Variable    ${MSG}	--CNC Entitlements--\n
+
+	FOR  ${item}  IN  @{json_response}
+		${entitlement}=	Set Variable   ${item['display_name']}
+		
+		FOR  ${ent}  IN  @{FIELDS}
+			Log	${item}
+			${search}	Set Variable 	$..${ent}
+			${data}	Get Value From Json    ${item['entitlements']}    ${search}
+
+			Set Test Variable    ${MSG}    ${MSG}${entitlement}|${ent}:${data}\n
+			Append To List  ${CNC_ENTITLEMENTS}	${entitlement}|${ent}:${data}
+			
+		END 		
+		
+	END
+	
+	Set Suite Variable  ${CNC_ENTITLEMENTS}	
+
+
+validate-cnc-entitlement
+	[Documentation]			Validates the CNC entitlements based on the suite variable of ``CNC_ENTITLEMENTS``
+	...						
+	...						\nValidation file(s): cnc-entitlements.txt
+	...                     \nAuthor: Simon Price
+	...                     \nUpdate: 2024-12-02
+	
+	@{FAIL}=    Create List	
+	@{PASS}=    Create List	
+	@{PASS-REV}=    Create List		
+	@{FAIL-REV}=    Create List	
+
+	${RESP}  Run Keyword And Ignore Error	Load Data from File  ${BASE}${/}ENV${/}${ENV}${/}cnc-entitlements.txt
+	
+	Set Test Variable    ${MSG}	--Validate CNC Entitlements--\n
+	
+	IF	"${RESP}[0]" == "PASS"
+		${appsVALID}	Set Variable	${RESP}[1]
+		@{appsVALID}=    Split to lines  ${appsVALID}
+
+		FOR  ${item}  IN  @{appsVALID}
+			# Positive
+			${RESP}=  Run Keyword And Ignore Error  List Should Contain Value  ${CNC_ENTITLEMENTS}  ${item}
+			Set Test Variable    ${MSG}    ${MSG}${${RESP}[0]X}: [${ENV}]:${item}\n		
+			Append To List  ${${RESP}[0]}  ${RESP}[0]:${item}:App found in validation list, but not in system
+			Set Tags	${RESP}[0]
+		END
+
+	END
+	
+	FOR  ${item}  IN  ${CNC_ENTITLEMENTS}
+		${RESP}=  Run Keyword And Ignore Error  List Should Contain Value  ${appsVALID}  ${item}
+		IF  "${RESP}[0]" == "FAIL"	
+			Set Test Variable    ${MSG}    ${MSG}WARN: ${item} Not in valid list.\n
 			Append To List  ${${RESP}[0]-REV}  ${RESP}[0]:${item}
 			
 		END
@@ -349,9 +447,9 @@ DEPRECATED-get-data-gw
 
 	Set Suite Variable  ${CNC_DATAGW}	
 
-get-data-gw
+get-cnc-cdg
 	[Documentation]			Retrieves CNC Data gateway key configuration from /crosswork/dg-manager/v1/dg/query
-	...						\nSuite Variables: ``CNC_DATAGW``
+	...						\nSuite Variables: ``CNC_DATAGW`` ``CNC_DATAGW_OPER``
 	...                       
 	...						\nAuthor: Simon Price
 	...						\nUpdate: 2024-12-02
@@ -363,6 +461,7 @@ get-data-gw
 	
     ${description}  set variable    ${TEST NAME}
 	@{CNC_DATAGW}=    Create List	
+	@{CNC_DATAGW_OPER}=    Create List
 	
 	@{FIELDS_DATA}=	Create List	name
 	@{FIELDS_CONFIGDATA}=	Create List	version	adminState	profileType
@@ -413,8 +512,7 @@ get-data-gw
 		FOR  ${item}  IN  @{FIELDS_OPERDATA}
 			${search}	Set Variable 	$.${item}
 			${values}	Get Value From Json    ${data['operationalData']}    ${search}
-			Set Test Variable    ${MSG}    ${MSG}${cdg}:${item}:${values[0]}\n
-			Append To List  ${CNC_DATAGW}	${cdg}:${item}:${values[0]}
+			Append To List  ${CNC_DATAGW_OPER}	${cdg}:${item}:${values[0]}
 		END		
 
 		
@@ -433,11 +531,12 @@ get-data-gw
 #	END 
 
 	Set Suite Variable  ${CNC_DATAGW}	
+	Set Suite Variable  ${CNC_DATAGW_OPER}	
 
 validate-cnc-cdg
 	[Documentation]			Validates the data gateway configuration based on the suite variable of ``CNC_DATAGW``
 	...                       
-	...						\nValidation file(s): cnc-dgw.txt
+	...						\nValidation file(s): cnc-cdg.txt
 	...						\nAuthor: Simon Price
 	...						\nUpdate: 2024-12-02
 	
@@ -447,7 +546,7 @@ validate-cnc-cdg
 	@{PASS-REV}=    Create List		
 	@{FAIL-REV}=    Create List	
 
-	${RESP}  Run Keyword And Ignore Error	Load Data from File  ${BASE}${/}ENV${/}${ENV}${/}cnc-dgw.txt
+	${RESP}  Run Keyword And Ignore Error	Load Data from File  ${BASE}${/}ENV${/}${ENV}${/}cnc-cdg.txt
 	
 	Set Test Variable    ${MSG}	--Validate CDG--\n
 	
@@ -458,6 +557,147 @@ validate-cnc-cdg
 		FOR  ${item}  IN  @{appsVALID}
 			# Positive
 			${RESP}=  Run Keyword And Ignore Error  List Should Contain Value  ${CNC_DATAGW}  ${item}
+			Set Test Variable    ${MSG}    ${MSG}${${RESP}[0]X}: [${ENV}]:${item}\n		
+			Append To List  ${${RESP}[0]}  ${RESP}[0]:${item}:App found in validation list, but not in system
+			Set Tags	${RESP}[0]
+		END
+
+	END
+
+	${FAIL_COUNT}=  Get Length  ${FAIL}
+	${FAIL_COUNT_REV}=  Get Length  ${FAIL-REV}
+	
+	Log List  ${PASS}
+	Log List  ${FAIL}	
+	Log List  ${FAIL-REV}
+	
+	Run Keyword If  ${FAIL_COUNT} > 0  
+	...  fail  Differences between detected and actual applications were encountered.	
+	
+	Run Keyword If  ${FAIL_COUNT_REV} > 0  
+	...  pass execution  There are applications running that are not in the valid list.	
+
+	Set Test Variable    ${MSG}    ${MSG}\nAll tests passed. Failures:${FAIL_COUNT}
+
+validate-cnc-cdg-health
+	[Documentation]			Validates the data gateway health on the suite variable of ``CNC_DATAGW_OPER``
+	...                       
+	...						\nValidation file(s): cnc-cdg-health.txt
+	...						\nAuthor: Simon Price
+	...						\nUpdate: 2024-12-02
+	
+	@{FAIL}=    Create List	
+	@{PASS}=    Create List	
+	@{PASS}=    Create List	
+	@{PASS-REV}=    Create List		
+	@{FAIL-REV}=    Create List	
+
+	${RESP}  Run Keyword And Ignore Error	Load Data from File  ${BASE}${/}ENV${/}${ENV}${/}cnc-cdg-health.txt
+	
+	Set Test Variable    ${MSG}	--Validate CDG Health--\n
+	
+	IF	"${RESP}[0]" == "PASS"
+		${appsVALID}	Set Variable	${RESP}[1]
+		@{appsVALID}=    Split to lines  ${appsVALID}
+
+		FOR  ${item}  IN  @{appsVALID}
+			# Positive
+			${RESP}=  Run Keyword And Ignore Error  List Should Contain Value  ${CNC_DATAGW_OPER}  ${item}
+			Set Test Variable    ${MSG}    ${MSG}${${RESP}[0]X}: [${ENV}]:${item}\n		
+			Append To List  ${${RESP}[0]}  ${RESP}[0]:${item}:App found in validation list, but not in system
+			Set Tags	${RESP}[0]
+		END
+
+	END
+
+	${FAIL_COUNT}=  Get Length  ${FAIL}
+	${FAIL_COUNT_REV}=  Get Length  ${FAIL-REV}
+	
+	Log List  ${PASS}
+	Log List  ${FAIL}	
+	Log List  ${FAIL-REV}
+	
+	Run Keyword If  ${FAIL_COUNT} > 0  
+	...  fail  Differences between detected and actual applications were encountered.	
+	
+	Run Keyword If  ${FAIL_COUNT_REV} > 0  
+	...  pass execution  There are applications running that are not in the valid list.	
+
+	Set Test Variable    ${MSG}    ${MSG}\nAll tests passed. Failures:${FAIL_COUNT}
+
+get-cnc-cdg-pools
+	[Documentation]			Retrieves CNC Data gateway pool key configuration from /crosswork/dg-manager/v2/vdg/query
+	...						\nSuite Variables: ``CNC_DATAGW``
+	...                       
+	...						\nAuthor: Simon Price
+	...						\nUpdate: 2024-12-02
+	
+    ${myurl}  Set Variable   status
+	${headers}  Create Dictionary
+	set to dictionary  ${headers}  Content-type=application/json
+	set to dictionary  ${headers}  Authorization=Bearer ${token}
+	
+    ${description}  set variable    ${TEST NAME}
+	@{CNC_DATAGW_POOL}=    Create List	
+	
+	@{FIELDS_DATA}=	Create List	name
+	@{FIELDS_VIP}=	Create List	inetAddr	inetAddr	mask	gateway
+	@{FIELDS_VIP_CDG}=	Create List	cpu	memory	nics
+    
+	${myurl}  Set Variable   crosswork/dg-manager/v2/vdg/query
+
+	${payload}	Set Variable	{}
+	${payload_json}	evaluate  json.loads($payload)    json
+
+    ${response}   POST On Session  cw  ${myurl}  headers=${headers}	expected_status=200	json=${payload_json}
+
+    ${json_response}    evaluate  json.loads($response.text)    json
+
+	log	${json_response['data']}
+	Set Test Variable    ${MSG}	--Data Gateway Pool(s)--\n   
+
+	FOR  ${data}  IN  @{json_response['data']} 
+	
+		${cdg}	Get Value From Json    ${data}    $.name
+		
+		FOR  ${item}  IN  @{FIELDS_VIP}
+			${search}	Set Variable 	$..${item}
+			${values}	Get Value From Json    ${data['virtualIPs']}    ${search}
+			Set Test Variable    ${MSG}    ${MSG}${cdg}:${item}:${values[0]}\n
+			Append To List  ${CNC_DATAGW_POOL}	${cdg}:${item}:${values[0]}
+		END		
+
+
+	
+	END 
+	
+
+	Set Suite Variable  ${CNC_DATAGW_POOL}	
+
+validate-cnc-cdg-pools
+	[Documentation]			Validates the data gateway pool configuration based on the suite variable of ``CNC_DATAGW_POOL``
+	...                       
+	...						\nValidation file(s): cnc-cdg-pools.txt
+	...						\nAuthor: Simon Price
+	...						\nUpdate: 2024-12-02
+	
+	@{FAIL}=    Create List	
+	@{PASS}=    Create List	
+	@{PASS}=    Create List	
+	@{PASS-REV}=    Create List		
+	@{FAIL-REV}=    Create List	
+
+	${RESP}  Run Keyword And Ignore Error	Load Data from File  ${BASE}${/}ENV${/}${ENV}${/}cnc-cdg-pools.txt
+	
+	Set Test Variable    ${MSG}	--Validate CDG Pools--\n
+	
+	IF	"${RESP}[0]" == "PASS"
+		${appsVALID}	Set Variable	${RESP}[1]
+		@{appsVALID}=    Split to lines  ${appsVALID}
+
+		FOR  ${item}  IN  @{appsVALID}
+			# Positive
+			${RESP}=  Run Keyword And Ignore Error  List Should Contain Value  ${CNC_DATAGW_POOL}  ${item}
 			Set Test Variable    ${MSG}    ${MSG}${${RESP}[0]X}: [${ENV}]:${item}\n		
 			Append To List  ${${RESP}[0]}  ${RESP}[0]:${item}:App found in validation list, but not in system
 			Set Tags	${RESP}[0]
@@ -705,6 +945,97 @@ validate-nso-service-types
 
 	Set Test Variable    ${MSG}    ${MSG}\nAll tests passed. Failures:${FAIL_COUNT}
 
+validate-cnc-services
+	[Documentation]			Validates the running NSO service types based on the suite variable of ``CNC_SERVICES``
+	...                       
+	...						\nValidation file(s): cnc-services.txt
+	...                     \nAuthor: Simon Price
+	...                     \nUpdate: 2024-12-02
+	
+	@{FAIL}=    Create List	
+	@{PASS}=    Create List	
+	@{PASS}=    Create List	
+	@{PASS-REV}=    Create List		
+	@{FAIL-REV}=    Create List	
+
+	${RESP}  Run Keyword And Ignore Error	Load Data from File  ${BASE}${/}ENV${/}${ENV}${/}cnc-services.txt
+	
+	Set Test Variable    ${MSG}	--Validate CNC Services--\n
+	
+	IF	"${RESP}[0]" == "PASS"
+		${appsVALID}	Set Variable	${RESP}[1]
+		@{appsVALID}=    Split to lines  ${appsVALID}
+
+		FOR  ${item}  IN  @{appsVALID}
+			# Positive
+			${RESP}=  Run Keyword And Ignore Error  List Should Contain Value  ${CNC_SERVICES}  ${item}
+			Set Test Variable    ${MSG}    ${MSG}${${RESP}[0]X}: [${ENV}]:${item}\n	
+			Append To List  ${${RESP}[0]}  ${RESP}[0]:${item}:App found in validation list, but not in system
+			Set Tags	${RESP}[0]
+		END
+
+	END
+
+	${FAIL_COUNT}=  Get Length  ${FAIL}
+	${FAIL_COUNT_REV}=  Get Length  ${FAIL-REV}
+	
+	Log List  ${PASS}
+	Log List  ${FAIL}	
+	Log List  ${FAIL-REV}
+	
+	Run Keyword If  ${FAIL_COUNT} > 0  
+	...  fail  Differences between detected and actual applications were encountered.	
+	
+	Run Keyword If  ${FAIL_COUNT_REV} > 0  
+	...  pass execution  There are applications running that are not in the valid list.	
+
+	Set Test Variable    ${MSG}    ${MSG}\nAll tests passed. Failures:${FAIL_COUNT}
+
+validate-cnc-transport
+	[Documentation]			Validates the running NSO transport services based on the suite variable of ``CNC_TRANSPORT``
+	...                       
+	...						\nValidation file(s): cnc-transport.txt
+	...                     \nAuthor: Simon Price
+	...                     \nUpdate: 2024-12-02
+	
+	@{FAIL}=    Create List	
+	@{PASS}=    Create List	
+	@{PASS}=    Create List	
+	@{PASS-REV}=    Create List		
+	@{FAIL-REV}=    Create List	
+
+	${RESP}  Run Keyword And Ignore Error	Load Data from File  ${BASE}${/}ENV${/}${ENV}${/}cnc-transport.txt
+	
+	Set Test Variable    ${MSG}	--Validate CNC Transport--\n
+	
+	IF	"${RESP}[0]" == "PASS"
+		${appsVALID}	Set Variable	${RESP}[1]
+		@{appsVALID}=    Split to lines  ${appsVALID}
+
+		FOR  ${item}  IN  @{appsVALID}
+			# Positive
+			${RESP}=  Run Keyword And Ignore Error  List Should Contain Value  ${CNC_TRANSPORT}  ${item}
+			Set Test Variable    ${MSG}    ${MSG}${${RESP}[0]X}: [${ENV}]:${item}\n	
+			Append To List  ${${RESP}[0]}  ${RESP}[0]:${item}:App found in validation list, but not in system
+			Set Tags	${RESP}[0]
+		END
+
+	END
+
+	${FAIL_COUNT}=  Get Length  ${FAIL}
+	${FAIL_COUNT_REV}=  Get Length  ${FAIL-REV}
+	
+	Log List  ${PASS}
+	Log List  ${FAIL}	
+	Log List  ${FAIL-REV}
+	
+	Run Keyword If  ${FAIL_COUNT} > 0  
+	...  fail  Differences between detected and actual applications were encountered.	
+	
+	Run Keyword If  ${FAIL_COUNT_REV} > 0  
+	...  pass execution  There are applications running that are not in the valid list.	
+
+	Set Test Variable    ${MSG}    ${MSG}\nAll tests passed. Failures:${FAIL_COUNT}
 
 get-device-alerts
 	[Documentation]			Retrieves KPI alerts associated with devices and KPIs. Limited to first 100 devices.
@@ -1247,11 +1578,16 @@ Logon to CNC
 	Set Test Variable    ${MSG}    ${MSG}\nUSER: ${data["auth"]["username"]}	
 	#Set Test Variable    ${MSG}    ${MSG}\nToken: ${token}
 
+
 Suite Teardown
+
+	[Tags]  Pronghorn
+	[Documentation]  Dispose of Sessions
 	
 	Delete All sessions
 
 
 Suite Setup	
 
+	Create Hosts
 	Get Current DTTM

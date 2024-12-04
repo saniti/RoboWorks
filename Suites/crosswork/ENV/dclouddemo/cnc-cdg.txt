@@ -7,4 +7,3 @@
 ['cdg1.demo.dcloud.cisco.com']:name:['eth0', 'eth1', 'eth2']
 ['cdg1.demo.dcloud.cisco.com']:inetAddr:['198.18.134.230', '198.18.2.230']
 ['cdg1.demo.dcloud.cisco.com']:mask:['18', '24']
-['cdg1.demo.dcloud.cisco.com']:operState:OS_UP

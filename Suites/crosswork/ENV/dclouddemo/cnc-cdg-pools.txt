@@ -1,0 +1,4 @@
+['CDG_Pool_1-1']:inetAddr:198.18.1.220
+['CDG_Pool_1-1']:inetAddr:198.18.1.220
+['CDG_Pool_1-1']:mask:24
+['CDG_Pool_1-1']:gateway:198.18.1.1
