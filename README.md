@@ -161,10 +161,11 @@ Tagging is used extensively through the test case, and each kind of test has it'
 > Success in gathering and validation
 
 ![plot](./img/summary-2.png) 
-> Filtered by tag `VALIDATE` (only validation steps)
+> Filtered by tag `VALIDATE` (only validation steps) - all passed.
 
+### Test Result Screens
 ![plot](./img/test-filter-validate.png) 
-> Filtered by tag `VALIDATE` (only validation steps)
+> Filtered by tag `VALIDATE` (only validation steps). Platform summary has failed - able to see specific line of configuration that was not compliance (timezone)
 
 ![plot](./img/test-filter-fail-1.png) 
 
