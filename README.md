@@ -30,6 +30,25 @@ This makes it very extensible and easy to write new tests but following the form
 
 Once the above is done, running the script will produce captured data in the test result. You can actually just copy this data and put it into the baseline - which makes it very easy to create and modify a new baseline with a new environment / install.
 
+## Running
+Assuming you have performed the following:
+1. Configured an environment with credentials  the `Variables/CW_Environments.robot` file
+1. Installed the dependancies (below)
+1. Changed the default environment in `Suites/crosswork/cnc.robot`
+   `${ENV}	dclouddemo`
+
+You can now simply run the script
+```shell
+cd Suites/crosswork
+robot cnc.robot
+```
+Or, if you have multiple environments then just use the `-e` parameter
+```shell
+cd Suites/crosswork
+robot -e ENV:myinternaldemo cnc.robot
+```
+
+
 ## Installation
 Install is very straight forward. 
 1. Install python
