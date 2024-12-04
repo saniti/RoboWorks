@@ -86,14 +86,18 @@ Baseline data is stored in files under `Suites\crosswork\ENV\<environment>`
 Current, the test support validation of the following baseline data sets:
  Keyword               		| Description             
 ----------------------------|-------------------------
- cnc-apps.txt        		| CNC Applications        
+ cnc-apps.txt        		| CNC Applications  
+ cnc-cdg.txt				    | CNC Data Gateway    
+ cnc-cdg-health.txt  		| CNC Data Gateway Health
+ cnc-entitlements.txt   | CNC Entitlemnts
  cnc-credentials.txt 		| CNC Credential Policies 
  cnc-devices.txt     		| CNC Devices             
  cnc-images.txt      		| CNC Images (SWIM)       
  cnc-platform.txt    		| CNC Platform            
  cnc-providers.txt   		| CNC Providers           
  cnc-nso-service-types.txt	| CNC Network Services     
- cnc-cdg.txt				| CNC Data Gateway        
+ cnc-services.txt				| CNC VPN Services       
+ cnc-transport.txt				| CNC VPN Transports
  cnc-syslog.txt				| CNC Syslog definitions  
 
 Simply populate the captured data from the `DATA-COLLECTION` steps into the appropriate text file. Next run - this will validate the data and you should see a pass. 
@@ -110,8 +114,10 @@ The `cnc.robot` file contains the test cases that are execute, are all tagged.
  get-service-types 		| NSO Service packages 
  get-cnc-services     		| serviceType /  serviceName / provisioningState
  get-cnc-transport      		| serviceType /  serviceName / provisioningState  
+ get-cnc-entitlements 		| display_name / name / version 
  get-syslog-dest   		| host / port / criteria     
- get-data-gw  		| version / adminState / profileType / interface name / interface inetAddr / interface mask / config cpu / config memory / config nics / operational operState
+ get-cnc-cdg  		| version / adminState / profileType / interface name / interface inetAddr / interface mask / config cpu / config memory / config nics / operational operState
+ get-cnc-cdg-pools | name / inetAddr / mask / gateway
  get-swim-images	| name / version / family / vendor
  get-cnc-devices				| host_name / reachability_state / operational_state / profile / node_ip / product_info / software_type / product_info / software_version
  get-device-alerts			| [device alerts] device_id / impact_score / [kpi_alerts] device_id / impact_score
@@ -123,10 +129,43 @@ The `cnc.robot` file contains the test cases that are execute, are all tagged.
  get-application-versions			| application_data / application_id / version 
  get-application-health			| obj_name (Healthy) / obj_name (Degraded)
 
+### Validations Performed during `VALIDATE` steps
+Not everyting that is collected is valildated against a baseline / external flie. Some is purely FYI such as number of alerts, and some is just to use for purposes such as as-built or platform documentation.
+
+Keyword               		| Description   |  Validation          
+----------------------------|-------------------------|---
+ validate-cnc-cdg       		| Validates contents of `CNC_DATAGW` |External:  cnc-cdg.txt
+ validate-cnc-cdg-health    | Validates the contents of `CNC_DATAGW_OPER` | External: cnc-cdg-health.txt
+ validate-cnc-cdg-pools     | validates contents of `CNC_DATAGW_POOL` | External: cnc-cdg-pools.txt
+ validate-cnc-entitlement | validates contents of `CNC_ENTITLEMENTS` | External: cnc-entitlements.txt
+  validate-cnc-platform | validates contents of `CNC_PLATFORM`| External: cnc-platform.txt
+  validate-cnc-app-versions | validates contents of `CNC_APP_VERSIONS` | External: cnc-apps.txt
+  validate-nso-service-types | validates contents of `CNC_SERVICE_TYPES` | External: cnc-nso-service-types.txt
+  validate-cnc-services | validates contents of `CNC_SERVICES` | External: cnc-services.txt
+  validate-cnc-transport	| validates contents of `CNC_TRANSPORT` | External: cnc-transport.txt
+  validate-cnc-credentials | validates contents of `CNC_CREDENTIALS` | External: cnc-credentials.txt
+  validate-cnc-providers	| validates contents of `CNC_PROVIDERS` | External: cnc-providers.txt
+  validate-cnc-devices | validates contents of `CNC_DEVICES` | External: cnc-devices.txt
+  validate-swim-images | validates contents of `CNC_SWIM_IMAGES` | External: cnc-images.txt
+validate-cnc-application-health | validates contents of `CNC_APP_DEGRADED` | Checks for applications listed as degraded
+
+# Test Result
+Test results are standard robotframework - HTML pages and associated log report. 
+Tagging is used extensively through the test case, and each kind of test has it's own tag, and associated with a `DATA-COLLECTION` or `VALIDATE` tag. 
 
 ## Output Examples
-### Summary Screen
+### Summary Screens
 > Failure on one data collection activity
+
 ![plot](./img/summary-1.png)
-### 
+> Success in gathering and validation
+
+![plot](./img/summary-2.png) 
+> Filtered by tag `VALIDATE` (only validation steps) - all passed.
+
+### Test Result Screens
+![plot](./img/test-filter-validate.png) 
+> Filtered by tag `VALIDATE` (only validation steps). Platform summary has failed - able to see specific line of configuration that was not compliance (timezone)
+
+![plot](./img/test-filter-fail-1.png) 
 

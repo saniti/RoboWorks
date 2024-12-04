@@ -1,0 +1,1 @@
+['cdg1.demo.dcloud.cisco.com']:operState:OS_UP
