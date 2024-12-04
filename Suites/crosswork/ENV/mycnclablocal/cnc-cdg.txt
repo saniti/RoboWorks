@@ -1,0 +1,9 @@
+['cdg1.demo.dcloud.cisco.com']:version:7.0.0 (branch release700 - build number 19)
+['cdg1.demo.dcloud.cisco.com']:adminState:AS_UP
+['cdg1.demo.dcloud.cisco.com']:profileType:VM_PROFILE_EXTENDED
+['cdg1.demo.dcloud.cisco.com']:cpu:20
+['cdg1.demo.dcloud.cisco.com']:memory:110
+['cdg1.demo.dcloud.cisco.com']:nics:3
+['cdg1.demo.dcloud.cisco.com']:name:['eth0', 'eth1', 'eth2']
+['cdg1.demo.dcloud.cisco.com']:inetAddr:['198.18.134.230', '198.18.2.230']
+['cdg1.demo.dcloud.cisco.com']:mask:['18', '24']

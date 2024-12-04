@@ -2,7 +2,7 @@
 Documentation      System, environment and configuration baseline and verification.
 
 Library	 Collections			
-Library	 RequestsLibrary			
+Library	 RequestsLibrary
 Library  SSHLibrary  timeout=60
 Library  String
 Library  DateTime
@@ -55,6 +55,13 @@ Retrieve Platform Summary
 	[setup]    Set Test Variable    ${MSG}    ${EMPTY}    	
 	[teardown]    Set Test Message    ${MSG}\n${TEST MESSAGE}    
 	${RESP}  get-cnc-platform
+	
+Retrieve Node Info	
+	[Documentation]	Get key information on CNC nodes
+	[Tags]  DATA-COLLECTION	PLATFORM
+	[setup]    Set Test Variable    ${MSG}    ${EMPTY}    	
+	[teardown]    Set Test Message    ${MSG}\n${TEST MESSAGE}    
+	${RESP}  get-cnc-nodes
 
 Retrieve Devices	
 	[Documentation]	Find key device information
@@ -251,6 +258,13 @@ Validate CNC Devices
 	[setup]    Set Test Variable    ${MSG}    ${EMPTY}    	
 	[teardown]    Set Test Message    ${MSG}\n${TEST MESSAGE}    
 	${RESP}  validate-cnc-devices
+
+Validate CNC Devices State/Health
+	[Documentation]	Validate CNC Device health and state info is correct as per the file spec [cnc-devices.txt]
+	[Tags]  VALIDATE	DEVICE
+	[setup]    Set Test Variable    ${MSG}    ${EMPTY}    	
+	[teardown]    Set Test Message    ${MSG}\n${TEST MESSAGE}    
+	${RESP}  validate-cnc-device-health
 
 Validate CNC SWIM Images
 	[Documentation]	Validate Software Image repository as per the file spec [cnc-images.txt]

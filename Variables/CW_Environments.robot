@@ -12,15 +12,16 @@ Create Hosts
 	
 	# Accounts and passwords
 	
-	${admin_default}  Set Variable	{"username":"admin","password":"mypassword!"}
-	${admin_default_2}  Set Variable	{"username":"admin","password":"mypassword"}	
+	${admin_default}  Set Variable	{"username":"admin","password":"mypassword"}
+	${admin_default_2}  Set Variable	{"username":"admin","password":"mypassword"}
 
 
 	# Hosts and ports with references to account details above
 	
-	set to dictionary  ${CW_ENDPOINTS}  dclouddemo  {"host":"mydemoenvironment","protocol":"https","port":"30603","auth":${admin_default}}
-	set to dictionary  ${CW_ENDPOINTS}  mycnclablocal  {"host":"192.168.254.233","protocol":"https","port":"30605","auth":${admin_default_2}}	
+	set to dictionary  ${CW_ENDPOINTS}  mycnclablocal  {"host":"192.168.254.233","protocol":"https","port":"30605","auth":${admin_default}}
+	set to dictionary  ${CW_ENDPOINTS}  dclouddemo  {"host":"198.18.134.219","protocol":"https","port":"30603","auth":${admin_default_2}}
 
+	
 	
 	Set Suite Variable  ${CW_ENDPOINTS}
 	
