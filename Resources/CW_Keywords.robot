@@ -1568,26 +1568,49 @@ Logon to CNC
 	
 	${resp}		RequestsLibrary.POST ON Session	cw	${serverURL}${auth}	headers=${headers}  expected_status=201	verify=${False}
 	
+	${myTGT}    	Set Variable	${resp.text}
+
 	${resp2}	RequestsLibrary.POST ON Session	cw	${serverURL}${tgt}/${resp.text}	headers=${headers}  expected_status=200	verify=${False}	data=${payload}
 	
 	${token}  set variable  ${resp2.text}
 	set suite variable  ${token}
-	log	${token}
+	set suite variable  ${myTGT}
+	log	${myTGT}
 
 	Set Test Variable    ${MSG}    ${MSG}HOST: ${serverURL}
 	Set Test Variable    ${MSG}    ${MSG}\nUSER: ${data["auth"]["username"]}	
-	#Set Test Variable    ${MSG}    ${MSG}\nToken: ${token}
-
-
-Suite Teardown
-
-	[Tags]  Pronghorn
-	[Documentation]  Dispose of Sessions
 	
-	Delete All sessions
+
+Delete CNC Token
+	[Documentation]			Dispose of CNC token
+	...						
+	...						\nValidation file(s): none
+	...                     \nAuthor: Simon Price
+	...                     \nUpdate: 2024-12-02
+	
+	Log Variables  level=TRACE	
+	
+    ${myurl}  Set Variable   /crosswork/sso/v1/tickets/${myTGT}
+	${headers}  Create Dictionary
+	set to dictionary  ${headers}  Content-type=application/json
+	set to dictionary  ${headers}  Authorization=Bearer ${token}
+
+    ${response}   DELETE On Session  cw  ${myurl}  headers=${headers}	expected_status=200
 
 
 Suite Setup	
-
+	[Tags]  setup
+	[Documentation]  Load environments and get current time stamp
 	Create Hosts
 	Get Current DTTM
+
+Suite Teardown
+
+	[Tags]  teardown
+	[Documentation]  Dispose of Sessions
+	
+	Delete CNC Token
+	Delete All sessions
+	
+
+
