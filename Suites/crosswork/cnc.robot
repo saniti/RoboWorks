@@ -103,7 +103,7 @@ Retrieve CNC Device Alerts
 	[Tags]  DATA-COLLECTION	DEVICE	ALARMS
 	[setup]    Set Test Variable    ${MSG}    ${EMPTY}    	
 	[teardown]    Set Test Message    ${MSG}\n${TEST MESSAGE}    
-	${RESP}  get-device-alerts
+	${RESP}  get-device-alarms
 
 Retrieve CNC System Alarms
 	[Documentation]	Find all the current /active system alarms
@@ -189,19 +189,19 @@ Validate CNC Data Gateway Pools
 	[teardown]    Set Test Message    ${MSG}\n${TEST MESSAGE}    
 	${RESP}  validate-cnc-cdg-pools
 
-Validate CNC Entitlements
-	[Documentation]	Validate CNC Entitlements and RTM as per file spec [cnc-entitlements.txt]
-	[Tags]  VALIDATE	LICENSING
-	[setup]    Set Test Variable    ${MSG}    ${EMPTY}    	
-	[teardown]    Set Test Message    ${MSG}\n${TEST MESSAGE}    
-	${RESP}  validate-cnc-entitlement
-
 Validate CNC Data Gateway Health
 	[Documentation]	Validate the operational state of the CDG(s) as per file spec [cnc-cdg-health.txt]
 	[Tags]  VALIDATE	DATA_GATEWAY
 	[setup]    Set Test Variable    ${MSG}    ${EMPTY}    	
 	[teardown]    Set Test Message    ${MSG}\n${TEST MESSAGE}    
 	${RESP}  validate-cnc-cdg-health
+
+Validate CNC Entitlements
+	[Documentation]	Validate CNC Entitlements and RTM as per file spec [cnc-entitlements.txt]
+	[Tags]  VALIDATE	LICENSING
+	[setup]    Set Test Variable    ${MSG}    ${EMPTY}    	
+	[teardown]    Set Test Message    ${MSG}\n${TEST MESSAGE}    
+	${RESP}  validate-cnc-entitlement
 
 Validate Platform Summary	
 	[Documentation]	Validate key information on CNC Platform and hosting as per file spec [cnc-platform.txt]
@@ -279,6 +279,13 @@ Validate CNC Application Health
 	[setup]    Set Test Variable    ${MSG}    ${EMPTY}    	
 	[teardown]    Set Test Message    ${MSG}\n${TEST MESSAGE}    
 	${RESP}  validate-cnc-application-health
+	
+Validate Device Alarms
+	[Documentation]	Report on any active device alarms in critical or major
+	[Tags]  VALIDATE	DEVICE	ALARMS
+	[setup]    Set Test Variable    ${MSG}    ${EMPTY}    	
+	[teardown]    Set Test Message    ${MSG}\n${TEST MESSAGE}    
+	${RESP}  validate-device-alarms
 	
 
 

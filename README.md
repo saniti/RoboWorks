@@ -167,5 +167,11 @@ Tagging is used extensively through the test case, and each kind of test has it'
 ![plot](./img/test-filter-validate.png) 
 > Filtered by tag `VALIDATE` (only validation steps). Platform summary has failed - able to see specific line of configuration that was not compliance (timezone)
 
-![plot](./img/test-filter-fail-1.png) 
+![plot](./img/details-validate-fail.png) 
+> Validation failures based on active high severity device alarms
+
+![plot](./img/details-validate-fail-1.png) 
+> Validation failure from baseline based on change to user account used to connect to NSO
+
+
 

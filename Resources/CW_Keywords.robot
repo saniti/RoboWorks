@@ -54,16 +54,6 @@ get-cnc-platform
 		Append To List  ${CNC_PLATFORM}	${item}:${data}
 		
 	END 
-	
-	#FOR  ${item}  IN  @{FIELDS}
-	#	Log	@{data_json[${item}]}
-	#	Append To List  ${CNC_PLATFORM}	${data_json[${item}]}		
-		
-		#Version:${item['SchemaVersion']},Image:${item['CNC_VM_Image']},IPType:${item['ClusterIPStack']},MgmtVIP:${item['ManagementVIP']},MgmtMASK: ${item['ManagementIPNetmask']},MgmtGW:${item['ManagementIPGateway']},Domain:${item['DomainName']},NTP:${item['NTP']},DNS:${item['DNS']},RAMDISK:${item['RamDiskSize']},ThinProvisioned:${item['ThinProvisioned']},Timezone:${item['Timezone']}
-		
-		#Set Test Variable    ${MSG}    ${MSG}Version: ${item['SchemaVersion']}\nImage: ${item['CNC_VM_Image']}\nIPType: ${item['ClusterIPStack']}\nMgmtVIP: ${item['ManagementVIP']}\nMgmtMASK: ${item['ManagementIPNetmask']}\nMgmtGW: ${item['ManagementIPGateway']}\nDomain: ${item['DomainName']}\nNTP: ${item['NTP']}\nDNS: ${item['DNS']}\nRAMDISK: ${item['RamDiskSize']}\nThinProvisioned: ${item['ThinProvisioned']}\nTimezone: ${item['Timezone']}
-			
-	#END	
 
 	Set Suite Variable  ${CNC_PLATFORM}	
 	
@@ -91,21 +81,20 @@ validate-cnc-platform
 		FOR  ${item}  IN  @{appsVALID}
 			# Positive
 			${RESP}=  Run Keyword And Ignore Error  List Should Contain Value  ${CNC_PLATFORM}  ${item}
-			Set Test Variable    ${MSG}    ${MSG}${${RESP}[0]X}: [${ENV}]:${item}\n		
+			Run Keyword If	"${RESP}[0]"=="FAIL"	Set Test Variable    ${MSG}    ${MSG}${${RESP}[0]X}: [${ENV}]:${item}\n		
 			Append To List  ${${RESP}[0]}  ${RESP}[0]:${item}:App found in validation list, but not in system
 			Set Tags	${RESP}[0]
 		END
 
 	END
 	
-	FOR  ${item}  IN  ${CNC_PLATFORM}
+	FOR  ${item}  IN  @{CNC_PLATFORM}
 		${RESP}=  Run Keyword And Ignore Error  List Should Contain Value  ${appsVALID}  ${item}
 		IF  "${RESP}[0]" == "FAIL"	
-			Set Test Variable    ${MSG}    ${MSG}WARN: ${item} Not in valid list.\n
+			Set Test Variable    ${MSG}    ${MSG}\nWARN: ${item} Appears to be a new entry not in the validation list.\n
 			Append To List  ${${RESP}[0]-REV}  ${RESP}[0]:${item}
-			
 		END
-	END		
+	END
 
 	${FAIL_COUNT}=  Get Length  ${FAIL}
 	${FAIL_COUNT_REV}=  Get Length  ${FAIL-REV}
@@ -115,10 +104,10 @@ validate-cnc-platform
 	Log List  ${FAIL-REV}
 	
 	Run Keyword If  ${FAIL_COUNT} > 0  
-	...  fail  Differences between detected and actual applications were encountered.	
+	...  fail  ${FAIL_COUNT} validation(s) failed for CNC Platform configuration.
 	
 	Run Keyword If  ${FAIL_COUNT_REV} > 0  
-	...  pass execution  There are applications running that are not in the valid list.	
+	...  pass execution  Appears to be a new entry not in the validation list.\n
 
 	Set Test Variable    ${MSG}    ${MSG}\nAll tests passed. Failures:${FAIL_COUNT}
 
@@ -229,17 +218,17 @@ validate-cnc-entitlement
 		FOR  ${item}  IN  @{appsVALID}
 			# Positive
 			${RESP}=  Run Keyword And Ignore Error  List Should Contain Value  ${CNC_ENTITLEMENTS}  ${item}
-			Set Test Variable    ${MSG}    ${MSG}${${RESP}[0]X}: [${ENV}]:${item}\n		
+			Run Keyword If	"${RESP}[0]"=="FAIL"	Set Test Variable    ${MSG}    ${MSG}${${RESP}[0]X}: [${ENV}]:${item}\n		
 			Append To List  ${${RESP}[0]}  ${RESP}[0]:${item}:App found in validation list, but not in system
 			Set Tags	${RESP}[0]
 		END
 
 	END
 	
-	FOR  ${item}  IN  ${CNC_ENTITLEMENTS}
+	FOR  ${item}  IN  @{CNC_ENTITLEMENTS}
 		${RESP}=  Run Keyword And Ignore Error  List Should Contain Value  ${appsVALID}  ${item}
 		IF  "${RESP}[0]" == "FAIL"	
-			Set Test Variable    ${MSG}    ${MSG}WARN: ${item} Not in valid list.\n
+			Set Test Variable    ${MSG}    ${MSG}WARN: ${item} Appears to be a new entry not in the validation list.\n
 			Append To List  ${${RESP}[0]-REV}  ${RESP}[0]:${item}
 			
 		END
@@ -253,12 +242,12 @@ validate-cnc-entitlement
 	Log List  ${FAIL-REV}
 	
 	Run Keyword If  ${FAIL_COUNT} > 0  
-	...  fail  Differences between detected and actual applications were encountered.	
+	...  fail  ${FAIL_COUNT} validation(s) failed for CNC entitlements
 	
 	Run Keyword If  ${FAIL_COUNT_REV} > 0  
-	...  pass execution  There are applications running that are not in the valid list.	
+	...  pass execution  Appears to be a new entry not in the validation list.\n
 
-	Set Test Variable    ${MSG}    ${MSG}\nAll tests passed. Failures:${FAIL_COUNT}
+	Set Test Variable    ${MSG}    ${MSG}\nAll entitlements validated:${FAIL_COUNT} Errors.
 
 DEPRECATED-get-service-types
 	[Documentation]			DEPRECATED do not use
@@ -447,10 +436,10 @@ validate-syslog-dest
 	Log List  ${FAIL-REV}
 	
 	Run Keyword If  ${FAIL_COUNT} > 0  
-	...  fail  Differences between detected and actual applications were encountered.	
+	...  fail  ${FAIL_COUNT} validation(s) failed for SYSLOG configuration	
 	
 	Run Keyword If  ${FAIL_COUNT_REV} > 0  
-	...  pass execution  There are applications running that are not in the valid list.	
+	...  pass execution  Appears to be a new entry not in the validation list.\n	
 
 	Set Test Variable    ${MSG}    ${MSG}\nAll tests passed. Failures:${FAIL_COUNT}
 
@@ -600,7 +589,7 @@ validate-cnc-cdg
 		FOR  ${item}  IN  @{appsVALID}
 			# Positive
 			${RESP}=  Run Keyword And Ignore Error  List Should Contain Value  ${CNC_DATAGW}  ${item}
-			Set Test Variable    ${MSG}    ${MSG}${${RESP}[0]X}: [${ENV}]:${item}\n		
+			Run Keyword If	"${RESP}[0]"=="FAIL"	Set Test Variable    ${MSG}    ${MSG}${${RESP}[0]X}: [${ENV}]:${item}\n		
 			Append To List  ${${RESP}[0]}  ${RESP}[0]:${item}:App found in validation list, but not in system
 			Set Tags	${RESP}[0]
 		END
@@ -615,12 +604,12 @@ validate-cnc-cdg
 	Log List  ${FAIL-REV}
 	
 	Run Keyword If  ${FAIL_COUNT} > 0  
-	...  fail  Differences between detected and actual applications were encountered.	
+	...  fail  ${FAIL_COUNT} validation(s) failed for CDG configuration	
 	
 	Run Keyword If  ${FAIL_COUNT_REV} > 0  
-	...  pass execution  There are applications running that are not in the valid list.	
+	...  pass execution  Appears to be a new entry not in the validation list.\n
 
-	Set Test Variable    ${MSG}    ${MSG}\nAll tests passed. Failures:${FAIL_COUNT}
+	Set Test Variable    ${MSG}    ${MSG}\nAll configuration validated:${FAIL_COUNT} Errors.
 
 validate-cnc-cdg-health
 	[Documentation]			Validates the data gateway health on the suite variable of ``CNC_DATAGW_OPER``
@@ -646,7 +635,7 @@ validate-cnc-cdg-health
 		FOR  ${item}  IN  @{appsVALID}
 			# Positive
 			${RESP}=  Run Keyword And Ignore Error  List Should Contain Value  ${CNC_DATAGW_OPER}  ${item}
-			Set Test Variable    ${MSG}    ${MSG}${${RESP}[0]X}: [${ENV}]:${item}\n		
+			Run Keyword If	"${RESP}[0]"=="FAIL"	Set Test Variable    ${MSG}    ${MSG}${${RESP}[0]X}: [${ENV}]:${item}\n		
 			Append To List  ${${RESP}[0]}  ${RESP}[0]:${item}:App found in validation list, but not in system
 			Set Tags	${RESP}[0]
 		END
@@ -661,12 +650,12 @@ validate-cnc-cdg-health
 	Log List  ${FAIL-REV}
 	
 	Run Keyword If  ${FAIL_COUNT} > 0  
-	...  fail  Differences between detected and actual applications were encountered.	
+	...  fail  ${FAIL_COUNT} validation(s) failed for CDG health	
 	
 	Run Keyword If  ${FAIL_COUNT_REV} > 0  
-	...  pass execution  There are applications running that are not in the valid list.	
+	...  pass execution  Appears to be a new entry not in the validation list.\n
 
-	Set Test Variable    ${MSG}    ${MSG}\nAll tests passed. Failures:${FAIL_COUNT}
+	Set Test Variable    ${MSG}    ${MSG}\nAll configuration validated:${FAIL_COUNT} Errors
 
 get-cnc-cdg-pools
 	[Documentation]			Retrieves CNC Data gateway pool key configuration from /crosswork/dg-manager/v2/vdg/query
@@ -741,7 +730,7 @@ validate-cnc-cdg-pools
 		FOR  ${item}  IN  @{appsVALID}
 			# Positive
 			${RESP}=  Run Keyword And Ignore Error  List Should Contain Value  ${CNC_DATAGW_POOL}  ${item}
-			Set Test Variable    ${MSG}    ${MSG}${${RESP}[0]X}: [${ENV}]:${item}\n		
+			Run Keyword If	"${RESP}[0]"=="FAIL"	Set Test Variable    ${MSG}    ${MSG}${${RESP}[0]X}: [${ENV}]:${item}\n		
 			Append To List  ${${RESP}[0]}  ${RESP}[0]:${item}:App found in validation list, but not in system
 			Set Tags	${RESP}[0]
 		END
@@ -756,12 +745,12 @@ validate-cnc-cdg-pools
 	Log List  ${FAIL-REV}
 	
 	Run Keyword If  ${FAIL_COUNT} > 0  
-	...  fail  Differences between detected and actual applications were encountered.	
+	...  fail   ${FAIL_COUNT} validation(s) failed for CDG pool configuration	
 	
 	Run Keyword If  ${FAIL_COUNT_REV} > 0  
-	...  pass execution  There are applications running that are not in the valid list.	
+	...  pass execution  Appears to be a new entry not in the validation list.\n
 
-	Set Test Variable    ${MSG}    ${MSG}\nAll tests passed. Failures:${FAIL_COUNT}
+	Set Test Variable    ${MSG}    ${MSG}\nAll configuration validated:${FAIL_COUNT} Errors.
 
 DEPRECATED-get-swim-images
 	[Documentation]			Retrieves CNC SWIM/Image info from /crosswork/rs/json/SwimRepositoryRestService/getImagesForRepository
@@ -878,7 +867,7 @@ validate-swim-images
 		FOR  ${item}  IN  @{appsVALID}
 			# Positive
 			${RESP}=  Run Keyword And Ignore Error  List Should Contain Value  ${CNC_SWIM_IMAGES}  ${item}
-			Set Test Variable    ${MSG}    ${MSG}${${RESP}[0]X}: [${ENV}]:${item}\n		
+			Run Keyword If	"${RESP}[0]"=="FAIL"	Set Test Variable    ${MSG}    ${MSG}${${RESP}[0]X}: [${ENV}]:${item}\n		
 			Append To List  ${${RESP}[0]}  ${RESP}[0]:${item}:App found in validation list, but not in system
 			Set Tags	${RESP}[0]
 		END
@@ -901,10 +890,10 @@ validate-swim-images
 	Log List  ${FAIL-REV}
 	
 	Run Keyword If  ${FAIL_COUNT} > 0  
-	...  fail  Differences between detected and actual applications were encountered.	
+	...  fail  ${FAIL_COUNT} validation(s) failed for SWIM images	
 	
 	Run Keyword If  ${FAIL_COUNT_REV} > 0  
-	...  pass execution  There are applications running that are not in the valid list.	
+	...  pass execution  Appears to be a new entry not in the validation list.\n
 
 	Set Test Variable    ${MSG}    ${MSG}\nAll tests passed. Failures:${FAIL_COUNT}
 
@@ -1026,19 +1015,18 @@ validate-cnc-devices
 		FOR  ${item}  IN  @{appsVALID}
 			# Positive
 			${RESP}=  Run Keyword And Ignore Error  List Should Contain Value  ${CNC_DEVICES}  ${item}
-			Set Test Variable    ${MSG}    ${MSG}${${RESP}[0]X}: [${ENV}]:${item}\n		
+			Run Keyword If	"${RESP}[0]"=="FAIL"	Set Test Variable    ${MSG}    ${MSG}${${RESP}[0]X}: [${ENV}]:${item}\n		
 			Append To List  ${${RESP}[0]}  ${RESP}[0]:${item}:App found in validation list, but not in system
 			Set Tags	${RESP}[0]
 		END
 
 	END
 	
-	FOR  ${item}  IN  ${CNC_DEVICES}
+	FOR  ${item}  IN  @{CNC_DEVICES}
 		${RESP}=  Run Keyword And Ignore Error  List Should Contain Value  ${appsVALID}  ${item}
 		IF  "${RESP}[0]" == "FAIL"	
-			Set Test Variable    ${MSG}    ${MSG}\nWARN: ${item} Not in valid list.
+			Set Test Variable    ${MSG}    ${MSG}\nWARN: ${item} Appears to be a new entry not in the validation list.\n
 			Append To List  ${${RESP}[0]-REV}  ${RESP}[0]:${item}
-			
 		END
 	END		
 
@@ -1050,12 +1038,12 @@ validate-cnc-devices
 	Log List  ${FAIL-REV}
 	
 	Run Keyword If  ${FAIL_COUNT} > 0  
-	...  fail  Differences between detected and actual applications were encountered.	
+	...  fail  ${FAIL_COUNT} validation(s) failed for Device configuration	
 	
 	Run Keyword If  ${FAIL_COUNT_REV} > 0  
-	...  pass execution  There are applications running that are not in the valid list.	
+	...  pass execution  Appears to be a new entry not in the validation list.\n
 
-	Set Test Variable    ${MSG}    ${MSG}\nAll tests passed. Failures:${FAIL_COUNT}
+	Set Test Variable    ${MSG}    ${MSG}\nAll configuration validated:${FAIL_COUNT} Errors.
 
 validate-cnc-device-health
 	[Documentation]			Validates the CNC services/applications based on the suite variable of ``CNC_DEVICES_HEALTH``
@@ -1108,10 +1096,58 @@ validate-cnc-device-health
 	Log List  ${FAIL-REV}
 	
 	Run Keyword If  ${FAIL_COUNT} > 0  
-	...  fail  Failures were seen on one or more devices.	
+	...  fail  ${FAIL_COUNT} Failures were seen on one or more devices.	
+	
+	Run Keyword If  ${FAIL_COUNT_REV} > 0  
+	...  pass execution  Appears to be a new entry not in the validation list.\n	
 	
 	Set Test Variable    ${MSG}    ${MSG}\nNo device errors detect. Errors:${FAIL_COUNT}
+
+validate-device-alarms
+	[Documentation]			Checks and reports on the presence of device level alarms captured during ``get-device-alarms`` and stored in  of ``CNC_DEVICE_ALARMS``
+	...                       
+	...						\nValidation file(s):none
+	...                     \nAuthor: Simon Price
+	...                     \nUpdate: 2024-12-05
 	
+	@{FAIL}=    Create List	
+	@{PASS}=    Create List	
+	@{PASS-REV}=    Create List		
+	@{FAIL-REV}=    Create List	
+
+	@{VALIDATE_LIST}=    Create List	DOWN	UNREACHABLE	ERROR	DEGRADED	errors
+	#@{VALIDATE_LIST}=    Create List	errors	
+	
+	Set Test Variable    ${MSG}	--Report Device Alarms--\n
+	
+	${ALARM_COUNT}=  Get Length  ${CNC_DEVICE_ALARMS}
+	
+	#Run Keyword If  ${ALARM_COUNT} == 0 
+	#...  pass  No device alarms detected.	
+
+	FOR  ${item}  IN  @{CNC_DEVICE_ALARMS}
+		Log	${item}
+
+		Set Test Variable    ${MSG}    ${MSG}${FAILX}: [${ENV}]:${item}\n	
+		Append To List  ${FAIL}  FAIL
+		Set Tags	FAIL
+	END 
+
+	${FAIL_COUNT}=  Get Length  ${FAIL}
+	${FAIL_COUNT_REV}=  Get Length  ${FAIL-REV}
+	
+	Log List  ${PASS}
+	Log List  ${FAIL}	
+	Log List  ${FAIL-REV}
+	
+	Run Keyword If  ${FAIL_COUNT} > 0  
+	...  fail  ${FAIL_COUNT} Failures were seen on one or more devices.	
+
+	Run Keyword If  ${FAIL_COUNT_REV} > 0  
+	...  pass execution  Appears to be a new entry not in the validation list.\n
+	
+	Set Test Variable    ${MSG}    ${MSG}\nNo device errors detect. Errors:${FAIL_COUNT}
+
 validate-nso-service-types
 	[Documentation]			Validates the running NSO service types based on the suite variable of ``CNC_SERVICE_TYPES``
 	...                       
@@ -1136,11 +1172,18 @@ validate-nso-service-types
 		FOR  ${item}  IN  @{appsVALID}
 			# Positive
 			${RESP}=  Run Keyword And Ignore Error  List Should Contain Value  ${CNC_SERVICE_TYPES}  ${item}
-			Set Test Variable    ${MSG}    ${MSG}${${RESP}[0]X}: [${ENV}]:${item}\n	
+			Run Keyword If	"${RESP}[0]"=="FAIL"	Set Test Variable    ${MSG}    ${MSG}${${RESP}[0]X}: [${ENV}]:${item}\n	
 			Append To List  ${${RESP}[0]}  ${RESP}[0]:${item}:App found in validation list, but not in system
 			Set Tags	${RESP}[0]
 		END
 
+		FOR  ${item}  IN  @{CNC_SERVICE_TYPES}
+			${RESP}=  Run Keyword And Ignore Error  List Should Contain Value  ${appsVALID}  ${item}
+			IF  "${RESP}[0]" == "FAIL"	
+				Set Test Variable    ${MSG}    ${MSG}\nWARN: ${item} Appears to be a new entry not in the validation list.\n
+				Append To List  ${${RESP}[0]-REV}  ${RESP}[0]:${item}
+			END
+		END	
 	END
 
 	${FAIL_COUNT}=  Get Length  ${FAIL}
@@ -1151,12 +1194,12 @@ validate-nso-service-types
 	Log List  ${FAIL-REV}
 	
 	Run Keyword If  ${FAIL_COUNT} > 0  
-	...  fail  Differences between detected and actual applications were encountered.	
-	
+	...  fail  ${FAIL_COUNT} validation(s) failed for NSO Service types
+		
 	Run Keyword If  ${FAIL_COUNT_REV} > 0  
-	...  pass execution  There are applications running that are not in the valid list.	
+	...  pass execution  Appears to be a new entry not in the validation list.\n
 
-	Set Test Variable    ${MSG}    ${MSG}\nAll tests passed. Failures:${FAIL_COUNT}
+	Set Test Variable    ${MSG}    ${MSG}\nAll service types validated:${FAIL_COUNT} Errors.
 
 validate-cnc-services
 	[Documentation]			Validates the running NSO service types based on the suite variable of ``CNC_SERVICES``
@@ -1197,10 +1240,10 @@ validate-cnc-services
 	Log List  ${FAIL-REV}
 	
 	Run Keyword If  ${FAIL_COUNT} > 0  
-	...  fail  Differences between detected and actual applications were encountered.	
+	...  fail  ${FAIL_COUNT} validation(s) failed for CNC Services	
 	
 	Run Keyword If  ${FAIL_COUNT_REV} > 0  
-	...  pass execution  There are applications running that are not in the valid list.	
+	...  pass execution  Appears to be a new entry not in the validation list.\n
 
 	Set Test Variable    ${MSG}    ${MSG}\nAll tests passed. Failures:${FAIL_COUNT}
 
@@ -1243,10 +1286,10 @@ validate-cnc-transport
 	Log List  ${FAIL-REV}
 	
 	Run Keyword If  ${FAIL_COUNT} > 0  
-	...  fail  Differences between detected and actual applications were encountered.	
+	...  fail  ${FAIL_COUNT} validation(s) failed for CNC Transport services
 	
 	Run Keyword If  ${FAIL_COUNT_REV} > 0  
-	...  pass execution  There are applications running that are not in the valid list.	
+	...  pass execution  Appears to be a new entry not in the validation list.\n
 
 	Set Test Variable    ${MSG}    ${MSG}\nAll tests passed. Failures:${FAIL_COUNT}
 
@@ -1262,6 +1305,9 @@ get-device-alerts
 	set to dictionary  ${headers}  Content-type=application/json
 	set to dictionary  ${headers}  Authorization=Bearer ${token}
 	
+	@{FAIL_DEVICE}=    Create List	
+	@{FAIL_KPI}=    Create List	
+	
     ${description}  set variable    ${TEST NAME}
 	
     ${myurl}  Set Variable   /crosswork/hi/v1/alerts/device/devices
@@ -1273,16 +1319,16 @@ get-device-alerts
     ${alerts}    evaluate  json.loads($response.text)    json
 	
 	Set Test Variable    ${MSG}	--CNC Device Alerts--\n
-	
-	#IF	${${alerts['device_alerts']['total_alerts']}} > ${0}
-	
+		
 	FOR  ${item}  IN  @{alerts['device_alerts']}
 		Log	${item['device_id']}
-		Set Test Variable    ${MSG}    ${MSG}Device:${item['device_id']}:${item['impact_score']}\n		
+		Set Test Variable    ${MSG}    ${MSG}Device:${item['device_id']}:${item['impact_score']}\n	
+		Append To List  ${FAIL_DEVICE}  FAIL_DEVICE		
 	END	
 	FOR  ${item}  IN  @{alerts['kpi_alerts']}
 		Log	${item['device_id']}
 		Set Test Variable    ${MSG}    ${MSG}KPI:${item['device_id']}:${item['impact_score']}\n		
+		Append To List  ${FAIL_KPI}  FAIL_KPI
 	END		
 	
 get-cnc-credentials
@@ -1607,10 +1653,18 @@ validate-cnc-app-versions
 		FOR  ${item}  IN  @{appsVALID}
 			# Positive
 			${RESP}=  Run Keyword And Ignore Error  List Should Contain Value  ${CNC_APP_VERSIONS}  ${item}
-			Set Test Variable    ${MSG}    ${MSG}${${RESP}[0]X}: [${ENV}]:${item}\n	
+			Run Keyword If	"${RESP}[0]"=="FAIL"	Set Test Variable    ${MSG}    ${MSG}${${RESP}[0]X}: [${ENV}]:${item}\n	
 			Append To List  ${${RESP}[0]}  ${RESP}[0]:${item}:App found in validation list, but not in system
 			Set Tags	${RESP}[0]
 		END
+		
+	FOR  ${item}  IN  @{CNC_APP_VERSIONS}
+		${RESP}=  Run Keyword And Ignore Error  List Should Contain Value  ${appsVALID}  ${item}
+		IF  "${RESP}[0]" == "FAIL"	
+			Set Test Variable    ${MSG}    ${MSG}\nWARN: ${item} Appears to be a new entry not in the validation list.\n
+			Append To List  ${${RESP}[0]-REV}  ${RESP}[0]:${item}
+		END
+	END		
 
 	END
 
@@ -1622,12 +1676,12 @@ validate-cnc-app-versions
 	Log List  ${FAIL-REV}
 	
 	Run Keyword If  ${FAIL_COUNT} > 0  
-	...  fail  Differences between detected and actual applications were encountered.	
+	...  fail  ${FAIL_COUNT} validation(s) failed for CNC App versions.
 	
 	Run Keyword If  ${FAIL_COUNT_REV} > 0  
-	...  pass execution  There are applications running that are not in the valid list.	
+	...  pass execution  Appears to be a new entry not in the validation list.\n
 
-	Set Test Variable    ${MSG}    ${MSG}\nAll tests passed. Failures:${FAIL_COUNT}
+	Set Test Variable    ${MSG}    ${MSG}\nAll versions validated:${FAIL_COUNT} Errors.
 
 get-application-health
 	[Documentation]			Retrieves health info from the CNC cluster api (/crosswork/platform/v2/cluster/app/health/list). Creates 2 variables - one for healty applications, one for degraded.
@@ -1694,10 +1748,10 @@ validate-cnc-application-health
 	Run Keyword If  ${FAIL_COUNT} > 0 
 	...  fail   ${FAIL_COUNT} applications degraded. 
 	
-	FOR  ${item}  IN  @{CNC_APP_HEALTHY}
-		Set Test Variable    ${MSG}    ${MSG}PASS: [${ENV}]:${item} is Healthy\n
-		Set Tags	PASS
-	END
+	#FOR  ${item}  IN  @{CNC_APP_HEALTHY}
+	#	Set Test Variable    ${MSG}    ${MSG}PASS: [${ENV}]:${item} is Healthy\n
+	#	Set Tags	PASS
+	#END
 
 	Run Keyword If  ${FAIL_COUNT} == 0 
 	...  pass execution   ${FAIL_COUNT} applications were listed as degraded.
@@ -1725,7 +1779,7 @@ validate-cnc-credentials
 		FOR  ${item}  IN  @{appsVALID}
 			# Positive
 			${RESP}=  Run Keyword And Ignore Error  List Should Contain Value  ${CNC_CREDENTIALS}  ${item}
-			Set Test Variable    ${MSG}    ${MSG}${${RESP}[0]X}: [${ENV}]:${item}\n
+			Run Keyword If	"${RESP}[0]"=="FAIL"	Set Test Variable    ${MSG}    ${MSG}${${RESP}[0]X}: [${ENV}]:${item}\n
 			Append To List  ${${RESP}[0]}  ${RESP}[0]:${item}:App found in validation list, but not in system
 			Set Tags	${RESP}[0]
 			
@@ -1741,12 +1795,12 @@ validate-cnc-credentials
 	Log List  ${FAIL-REV}
 	
 	Run Keyword If  ${FAIL_COUNT} > 0  
-	...  fail  Differences between detected and actual applications were encountered.	
+	...  fail  ${FAIL_COUNT} validation(s) failed for CNC Credential configuration.	
 	
 	Run Keyword If  ${FAIL_COUNT_REV} > 0  
-	...  pass execution  There are applications running that are not in the valid list.	
+	...  pass execution  Appears to be a new entry not in the validation list.\n
 
-	Set Test Variable    ${MSG}    ${MSG}\nAll tests passed. Failures:${FAIL_COUNT}
+	Set Test Variable    ${MSG}    ${MSG}\nAll credentials validated. Failures:${FAIL_COUNT}
 
 validate-cnc-providers
 	[Documentation]			Validates the CNC Providers (NSO,CDG etc) based on the suite variable of ``CNC_PROVIDERS``
@@ -1770,21 +1824,13 @@ validate-cnc-providers
 		FOR  ${item}  IN  @{appsVALID}
 			# Positive
 			${RESP}=  Run Keyword And Ignore Error  List Should Contain Value  ${CNC_PROVIDERS}  ${item}
-			Set Test Variable    ${MSG}    ${MSG}${${RESP}[0]X}: [${ENV}]:${item}\n
+			Run Keyword If	"${RESP}[0]"=="FAIL"	Set Test Variable    ${MSG}    ${MSG}${${RESP}[0]X}: [${ENV}]:${item}\n
 			Append To List  ${${RESP}[0]}  ${RESP}[0]:${item}:App found in validation list, but not in system
 			Set Tags	${RESP}[0]
 		END
 
 	END
-	
-	FOR  ${item}  IN  ${CNC_PROVIDERS}
-		${RESP}=  Run Keyword And Ignore Error  List Should Contain Value  ${appsVALID}  ${item}
-		IF  "${RESP}[0]" == "FAIL"	
-			Set Test Variable    ${MSG}    ${MSG}\nWARN: ${item} Not in valid list.
-			Append To List  ${${RESP}[0]-REV}  ${RESP}[0]:${item}
-			
-		END
-	END		
+		
 
 	${FAIL_COUNT}=  Get Length  ${FAIL}
 	${FAIL_COUNT_REV}=  Get Length  ${FAIL-REV}
@@ -1794,12 +1840,12 @@ validate-cnc-providers
 	Log List  ${FAIL-REV}
 	
 	Run Keyword If  ${FAIL_COUNT} > 0  
-	...  fail  Differences between detected and actual applications were encountered.	
+	...  fail  ${FAIL_COUNT} provider(s) entries failed validation.	
 	
 	Run Keyword If  ${FAIL_COUNT_REV} > 0  
-	...  pass execution  There are applications running that are not in the valid list.	
+	...  pass execution  Appears to be a new entry not in the validation list.\n
 
-	Set Test Variable    ${MSG}    ${MSG}\nAll tests passed. Failures:${FAIL_COUNT}
+	Set Test Variable    ${MSG}    ${MSG}\nAll provider entries validated. Failures:${FAIL_COUNT}
 
 
 
