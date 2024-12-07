@@ -248,6 +248,64 @@ validate-cnc-entitlement
 	...  pass execution  Appears to be a new entry not in the validation list.\n
 
 	Set Test Variable    ${MSG}    ${MSG}\nAll entitlements validated:${FAIL_COUNT} Errors.
+ 
+
+get-cnc-licensing
+	[Documentation]			Retrieves CNC Entitlements
+	...						\nSuite Variables: ``CNC_LICENSING``
+	...						
+	...                     \nAuthor: Simon Price
+	...                     \nUpdate: 2024-12-02
+	
+    ${myurl}  Set Variable   /crosswork/clms/v1/license-info
+	${headers}  Create Dictionary
+	set to dictionary  ${headers}  Content-type=application/json
+	set to dictionary  ${headers}  Authorization=Bearer ${token}
+	
+	${payload}	Set Variable	{"product_id":"CNC"}	
+	${payload_json}	evaluate  json.loads($payload)    json	
+	
+	@{CNC_LICENSING}=    Create List	
+	@{FIELDS_REGISTRATION}=	Create List	summary	registration_status
+
+	@{FIELDS_ENTITLEMENT}=	Create List	display_name	entitlement_version	enforce_mode	requested_count
+
+   ${description}  set variable    ${TEST NAME}
+
+	${response}   POST On Session  cw  ${myurl}  headers=${headers}	expected_status=200	json=${payload_json}
+
+    ${json_response}    evaluate  json.loads($response.text)    json
+	
+	Set Test Variable    ${MSG}	--CNC Licensing--\n
+	
+
+	${key1}	Get Value From Json     ${json_response}     $.reservation_status
+	${key2}	Get Value From Json     ${json_response}     $.smart_account_name	
+
+	${registration_summary}	Get Value From Json     ${json_response}     $.registration_summary	
+
+	#Set Test Variable    ${MSG}    ${MSG}\n--- Summary ---\n
+		Set Test Variable    ${MSG}    ${MSG}\n--- Licensing | Status:${key1} | Account:${key2} ---\n
+	FOR  ${reg}  IN  @{FIELDS_REGISTRATION}	
+		${search}	Set Variable 	$.${reg}
+		${data}	Get Value From Json    @{registration_summary}    ${search}
+		Set Test Variable    ${MSG}    ${MSG}${reg} | ${data}[0]\n
+	END
+
+	FOR  ${entitlement}  IN  @{json_response['entitlement_usage']}	
+		
+		Set Test Variable    ${MSG}    ${MSG}\n--- ${entitlement['description']} --- \n
+		FOR  ${ent}  IN  @{FIELDS_ENTITLEMENT}	
+			${search}	Set Variable 	$.${ent}
+			${data}	Get Value From Json    ${entitlement}    ${search}
+			Set Test Variable    ${MSG}    ${MSG}${ent} | ${data}[0]\n
+		END		
+
+	END
+		
+
+	Set Suite Variable  ${CNC_LICENSING}	
+
 
 DEPRECATED-get-service-types
 	[Documentation]			DEPRECATED do not use
@@ -753,8 +811,8 @@ validate-cnc-cdg-pools
 	Set Test Variable    ${MSG}    ${MSG}\nAll configuration validated:${FAIL_COUNT} Errors.
 
 DEPRECATED-get-swim-images
-	[Documentation]			Retrieves CNC SWIM/Image info from /crosswork/rs/json/SwimRepositoryRestService/getImagesForRepository
-	...						\nSuite Variables: ``CNC_SWIM_IMAGES``
+	[Documentation]			DEPRECATED do not use
+	...						
 	...                       
 	...                     \nAuthor: Simon Price
 	...                     \nUpdate: 2024-12-02
@@ -1118,7 +1176,7 @@ validate-device-alarms
 	@{VALIDATE_LIST}=    Create List	DOWN	UNREACHABLE	ERROR	DEGRADED	errors
 	#@{VALIDATE_LIST}=    Create List	errors	
 	
-	Set Test Variable    ${MSG}	--Report Device Alarms--\n
+	Set Test Variable    ${MSG}	--Reported Device Alarms--\n
 	
 	${ALARM_COUNT}=  Get Length  ${CNC_DEVICE_ALARMS}
 	
@@ -1457,7 +1515,7 @@ get-cnc-providers
 	END
 
 	Set Suite Variable  ${CNC_PROVIDERS}	
-	#Set Suite Variable  ${CNC_NODES_HEALTH}	
+
 
 DEPRECATED-get-system-alarms
 	[Documentation]			DEPRECATED do not use
@@ -1500,6 +1558,8 @@ get-system-alarms
 	...                     \nAuthor: Simon Price
 	...                     \nUpdate: 2024-12-03
 	
+	[arguments]	${numalarms}=${numalarms}
+	
     ${myurl}  Set Variable   status
 	${headers}  Create Dictionary
 	set to dictionary  ${headers}  Content-type=application/json
@@ -1509,32 +1569,34 @@ get-system-alarms
 	
 	@{CNC_SYSALARMS}=    Create List
 	
-	@{FIELDS_DATA}=	Create List	AlarmCategory	Description	events_count
-	@{FIELDS_EVENTS}=	Create List	alarm_id
+	@{FIELDS_DATA}=	Create List		Description		events_count
 
+	@{FIELDS_EVENTS}=	Create List	alarm_id
+	
     ${myurl}  Set Variable   /crosswork/alarms/v1/query
-	${payload}	Set Variable	{"openAlarmsOnly":true,"criteria":"select * from alarm limit 10 page 0 where alarmCategory=1 "}
+	${payload}	Set Variable	{"openAlarmsOnly":false,"criteria":"select * from alarm limit ${numalarms} page 0 where (state = 5 or state = 6)"}
 	${json_payload}	evaluate  json.loads($payload)    json
 	
     ${response}   POST On Session  cw  ${myurl}  headers=${headers}	json=${json_payload}	expected_status=200
 
     ${json_response}    evaluate  json.loads($response.text)    json
-	Set Test Variable    ${MSG}	--CNC System Alarms--\n
+	Set Test Variable    ${MSG}	--CNC System Alarms limit:(${numalarms})--\n
 	
 	FOR  ${data}  IN  @{json_response['alarms']} 
 
-		${key}	Get Value From Json    ${data}    $.Updated
+		${key}	Get Value From Json    ${data}    $.State
+		${key3}	Get Value From Json    ${data}    $.AlarmCategory	
+		${key2}	Get Value From Json    ${data}    $.Created			
+		
+		Set Test Variable    ${MSG}    ${MSG}\n--- Alarm | ${key}[0] | ${key3}[0] | ${key2}[0] ---\n
 		
 		FOR  ${item}  IN  @{FIELDS_DATA}
 			${search}	Set Variable 	$.${item}
 			${values}	Get Value From Json    ${data}    ${search}
-			Set Test Variable    ${MSG}    ${MSG}Alarms:${key}:${item}:${values[0]}\n
-			Append To List  ${CNC_SYSALARMS}	Alarms:${key}:${item}:${values[0]}
+			Set Test Variable    ${MSG}    ${MSG}${item} : ${values}\n
+			Append To List  ${CNC_SYSALARMS}	Alarms
 		END		
-
-		#Set Test Variable    ${MSG}    ${MSG}${CDG["name"]}\n
-		#Append To List  ${CNC_SYSALARMS}	${CDG["name"]}
-	
+		
 	END 
 	
 	Set Suite Variable  ${CNC_SYSALARMS}
