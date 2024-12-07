@@ -110,14 +110,14 @@ Retrieve CNC System Alarms
 	[Tags]  DATA-COLLECTION	ALARMS
 	[setup]    Set Test Variable    ${MSG}    ${EMPTY}    	
 	[teardown]    Set Test Message    ${MSG}\n${TEST MESSAGE}    
-	${RESP}  get-system-alarms
+	${RESP}  get-system-alarms	numalarms=20
 
 Retrieve CNC Providers
 	[Documentation]	Find Providers
 	[Tags]  DATA-COLLECTION	PROVIDERS
 	[setup]    Set Test Variable    ${MSG}    ${EMPTY}    	
 	[teardown]    Set Test Message    ${MSG}\n${TEST MESSAGE}    
-	${RESP}  get-cnc-providers
+	${RESP}  get-cnc-providers	
 
 Retrieve CNC Credentials
 	[Documentation]	Find credential policies
@@ -146,7 +146,7 @@ Retrieve CNC Data Gateway
 	[setup]    Set Test Variable    ${MSG}    ${EMPTY}    	
 	[teardown]    Set Test Message    ${MSG}\n${TEST MESSAGE}    
 	${RESP}  get-cnc-cdg
-	
+	 
 Retrieve CNC Data Gateway Pools
 	[Documentation]	Find Data Gateway Pool information
 	[Tags]  DATA-COLLECTION	DATA_GATEWAY
@@ -167,6 +167,13 @@ Retrieve CNC Entitlements
 	[setup]    Set Test Variable    ${MSG}    ${EMPTY}    	
 	[teardown]    Set Test Message    ${MSG}\n${TEST MESSAGE}    
 	${RESP}  get-cnc-entitlement
+
+Retrieve CNC Licensing
+	[Documentation]	Find CNC Licensing status
+	[Tags]  DATA-COLLECTION	LICENSING
+	[setup]    Set Test Variable    ${MSG}    ${EMPTY}    	
+	[teardown]    Set Test Message    ${MSG}\n${TEST MESSAGE}    
+	${RESP}  get-cnc-licensing
 
 Retrieve CNC Software Images
 	[Documentation]	Find Software Images (SWIM)
