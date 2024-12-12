@@ -27,7 +27,6 @@ Create Hosts
 	set to dictionary  ${CW_ENDPOINTS}  mycnclablocal  {"host":"192.168.254.233","protocol":"https","port":"30605","auth":${admin_default}}
 	set to dictionary  ${CW_ENDPOINTS}  dclouddemo  {"host":"198.18.134.219","protocol":"https","port":"30603","auth":${admin_default_2}}
 
-	
 
 	
 	Set Suite Variable  ${CW_ENDPOINTS}
