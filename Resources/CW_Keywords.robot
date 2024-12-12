@@ -44,16 +44,21 @@ get-cnc-platform
     ${json_response}    evaluate  json.loads($response.text)    json
 	Set Test Variable    ${MSG}	--CNC Platform Specs--\n
 	
-	#@{data}    Get Value From Json    ${json_response['CwClusterAndActions']}    $..CwCluster
-	
-	FOR  ${item}  IN  @{FIELDS}
-		${search}	Set Variable 	$..${item}
-		${data}	Get Value From Json    ${json_response['CwClusterAndActions']}    ${search}
+	${RESP}  Run Keyword And Ignore Error	Get Length	${json_response['CwClusterAndActions']} 
+	IF  "${RESP}[0]" == "FAIL"
+		Set Test Variable    ${MSG}    ${MSG}Data Collection failed for Platform Specs\n
+		fail	Test failed.
+	ELSE 
+		FOR  ${item}  IN  @{FIELDS}
+			${search}	Set Variable 	$..${item}
+			${data}	Get Value From Json    ${json_response['CwClusterAndActions']}    ${search}
 
-		Set Test Variable    ${MSG}    ${MSG}${item}:${data}\n
-		Append To List  ${CNC_PLATFORM}	${item}:${data}
-		
-	END 
+			Set Test Variable    ${MSG}    ${MSG}${item}:${data}\n
+			Append To List  ${CNC_PLATFORM}	${item}:${data}
+			
+		END 
+
+	END
 
 	Set Suite Variable  ${CNC_PLATFORM}	
 	
@@ -135,20 +140,27 @@ get-cnc-nodes
     ${json_response}    evaluate  json.loads($response.text)    json
 	Set Test Variable    ${MSG}	--CNC Node Info--\n
 	
-	FOR  ${data}  IN  @{json_response['node_summary']}
-		
-		${key}  Set Variable   ${data['node_name']}
-		
-		FOR  ${item}  IN  @{FIELDS}
-			${search}	Set Variable 	$.${item}
+	${RESP}  Run Keyword And Ignore Error	Get Length	${json_response['node_summary']} 
+	IF  "${RESP}[0]" == "FAIL"
+		Set Test Variable    ${MSG}    ${MSG}Data Collection failed for Node Info\n
+		fail	Test failed.	
+	
+		FOR  ${data}  IN  @{json_response['node_summary']}
 			
-			${values}	Get Value From Json   ${data}    ${search}
+			${key}  Set Variable   ${data['node_name']}
+			
+			FOR  ${item}  IN  @{FIELDS}
+				${search}	Set Variable 	$.${item}
+				
+				${values}	Get Value From Json   ${data}    ${search}
 
-			Set Test Variable    ${MSG}    ${MSG}${key}|${item}:${values}\n
-			Append To List  ${CNC_NODES}	${key}|${item}:${values}
+				Set Test Variable    ${MSG}    ${MSG}${key}|${item}:${values}\n
+				Append To List  ${CNC_NODES}	${key}|${item}:${values}
+				
+			END 
 			
-		END 
-		
+		END
+
 	END
 
 	Set Suite Variable  ${CNC_NODES}	
@@ -177,19 +189,26 @@ get-cnc-entitlement
     ${json_response}    evaluate  json.loads($response.text)    json
 	Set Test Variable    ${MSG}	--CNC Entitlements--\n
 
-	FOR  ${item}  IN  @{json_response}
-		${entitlement}=	Set Variable   ${item['display_name']}
-		
-		FOR  ${ent}  IN  @{FIELDS}
-			Log	${item}
-			${search}	Set Variable 	$..${ent}
-			${data}	Get Value From Json    ${item['entitlements']}    ${search}
-
-			Set Test Variable    ${MSG}    ${MSG}${entitlement}|${ent}:${data}\n
-			Append To List  ${CNC_ENTITLEMENTS}	${entitlement}|${ent}:${data}
+	${RESP}  Run Keyword And Ignore Error	Get Length	${json_response} 
+	IF  "${RESP}[0]" == "FAIL"
+		Set Test Variable    ${MSG}    ${MSG}Data Collection failed for CNC Entitlements\n
+		fail	Test failed.	
+	ELSE
+		FOR  ${item}  IN  @{json_response}
+			${entitlement}=	Set Variable   ${item['display_name']}
 			
-		END 		
-		
+			FOR  ${ent}  IN  @{FIELDS}
+				Log	${item}
+				${search}	Set Variable 	$..${ent}
+				${data}	Get Value From Json    ${item['entitlements']}    ${search}
+
+				Set Test Variable    ${MSG}    ${MSG}${entitlement}|${ent}:${data}\n
+				Append To List  ${CNC_ENTITLEMENTS}	${entitlement}|${ent}:${data}
+				
+			END 		
+			
+		END
+
 	END
 	
 	Set Suite Variable  ${CNC_ENTITLEMENTS}	
@@ -277,32 +296,39 @@ get-cnc-licensing
     ${json_response}    evaluate  json.loads($response.text)    json
 	
 	Set Test Variable    ${MSG}	--CNC Licensing--\n
-	
 
-	${key1}	Get Value From Json     ${json_response}     $.reservation_status
-	${key2}	Get Value From Json     ${json_response}     $.smart_account_name	
 
-	${registration_summary}	Get Value From Json     ${json_response}     $.registration_summary	
+	${RESP}  Run Keyword And Ignore Error	Get Length	${json_response} 
+	IF  "${RESP}[0]" == "FAIL"
+		Set Test Variable    ${MSG}    ${MSG}Data Collection failed for CNC Licensing\n
+		fail	Test failed.	
 
-	#Set Test Variable    ${MSG}    ${MSG}\n--- Summary ---\n
+	ELSE 
+
+		${key1}	Get Value From Json     ${json_response}     $.reservation_status
+		${key2}	Get Value From Json     ${json_response}     $.smart_account_name	
+
+		${registration_summary}	Get Value From Json     ${json_response}     $.registration_summary	
+
 		Set Test Variable    ${MSG}    ${MSG}\n--- Licensing | Status:${key1} | Account:${key2} ---\n
-	FOR  ${reg}  IN  @{FIELDS_REGISTRATION}	
-		${search}	Set Variable 	$.${reg}
-		${data}	Get Value From Json    @{registration_summary}    ${search}
-		Set Test Variable    ${MSG}    ${MSG}${reg} | ${data}[0]\n
-	END
 
-	FOR  ${entitlement}  IN  @{json_response['entitlement_usage']}	
-		
-		Set Test Variable    ${MSG}    ${MSG}\n--- ${entitlement['description']} --- \n
-		FOR  ${ent}  IN  @{FIELDS_ENTITLEMENT}	
-			${search}	Set Variable 	$.${ent}
-			${data}	Get Value From Json    ${entitlement}    ${search}
-			Set Test Variable    ${MSG}    ${MSG}${ent} | ${data}[0]\n
-		END		
+		FOR  ${reg}  IN  @{FIELDS_REGISTRATION}	
+			${search}	Set Variable 	$.${reg}
+			${data}	Get Value From Json    @{registration_summary}    ${search}
+			Set Test Variable    ${MSG}    ${MSG}${reg} | ${data}[0]\n
+		END
 
-	END
-		
+		FOR  ${entitlement}  IN  @{json_response['entitlement_usage']}	
+			
+			Set Test Variable    ${MSG}    ${MSG}\n--- ${entitlement['description']} --- \n
+			FOR  ${ent}  IN  @{FIELDS_ENTITLEMENT}	
+				${search}	Set Variable 	$.${ent}
+				${data}	Get Value From Json    ${entitlement}    ${search}
+				Set Test Variable    ${MSG}    ${MSG}${ent} | ${data}[0]\n
+			END		
+
+		END
+	END	
 
 	Set Suite Variable  ${CNC_LICENSING}	
 
@@ -356,12 +382,19 @@ get-service-types
 
     ${json_response}    evaluate  json.loads($response.text)    json
 	Set Test Variable    ${MSG}	--NSO Service Types--\n
+
+	${RESP}  Run Keyword And Ignore Error	Get Length	${json_response['serviceTypes']} 
+	IF  "${RESP}[0]" == "FAIL"
+		Set Test Variable    ${MSG}    ${MSG}Data Collection failed for NSO Service Types\n
+		fail	Test failed.	
+	ELSE
+
+		FOR  ${item}  IN  @{json_response['serviceTypes']}
+			Set Test Variable    ${MSG}    ${MSG}${item['serviceLayer']}:${item['serviceType']}\n	
+			Append To List  ${CNC_SERVICE_TYPES}	${item['serviceLayer']}:${item['serviceType']}	
+		END	
 	
-	FOR  ${item}  IN  @{json_response['serviceTypes']}
-		Set Test Variable    ${MSG}    ${MSG}${item['serviceLayer']}:${item['serviceType']}\n	
-		Append To List  ${CNC_SERVICE_TYPES}	${item['serviceLayer']}:${item['serviceType']}	
-	END	
-	
+	END 
 	Set Suite Variable  ${CNC_SERVICE_TYPES}	
 
 get-cnc-services
@@ -386,10 +419,17 @@ get-cnc-services
     ${json_response}    evaluate  json.loads($response.text)    json
 	Set Test Variable    ${MSG}	--VPN Services--\n
 	
-	FOR  ${item}  IN  @{json_response['elements']}
-		Set Test Variable    ${MSG}    ${MSG}${item['serviceType']}:${item['serviceName']}:${item['provisioningState']}\n	
-		Append To List  ${CNC_SERVICES}	${item['serviceType']}:${item['serviceName']}:${item['provisioningState']}		
-	END	
+	${RESP}  Run Keyword And Ignore Error	Get Length	${json_response['elements']} 
+	IF  "${RESP}[0]" == "FAIL"
+		Set Test Variable    ${MSG}    ${MSG}Data Collection failed for NSO Service Types\n
+		fail	Test failed.	
+	ELSE	
+	
+		FOR  ${item}  IN  @{json_response['elements']}
+			Set Test Variable    ${MSG}    ${MSG}${item['serviceType']}:${item['serviceName']}:${item['provisioningState']}\n	
+			Append To List  ${CNC_SERVICES}	${item['serviceType']}:${item['serviceName']}:${item['provisioningState']}		
+		END	
+	END
 	
 	Set Suite Variable  ${CNC_SERVICES}
 
@@ -414,12 +454,19 @@ get-cnc-transport
 	${response}   POST On Session  cw  ${myurl}  headers=${headers}	expected_status=200	json=${payload_json}
 
     ${json_response}    evaluate  json.loads($response.text)    json
-	Set Test Variable    ${MSG}	--Transport--\n
+	Set Test Variable    ${MSG}	--NSO Transport--\n
 	
-	FOR  ${item}  IN  @{json_response['elements']}
-		Set Test Variable    ${MSG}    ${MSG}${item['serviceType']}:${item['serviceName']}:${item['provisioningState']}\n	
-		Append To List  ${CNC_TRANSPORT}	${item['serviceType']}:${item['serviceName']}:${item['provisioningState']}	
-	END	
+	${RESP}  Run Keyword And Ignore Error	Get Length	${json_response['elements']} 
+	IF  "${RESP}[0]" == "FAIL"
+		Set Test Variable    ${MSG}    ${MSG}Data Collection failed for NSO Transport\n
+		fail	Test failed.	
+	ELSE	
+	
+		FOR  ${item}  IN  @{json_response['elements']}
+			Set Test Variable    ${MSG}    ${MSG}${item['serviceType']}:${item['serviceName']}:${item['provisioningState']}\n	
+			Append To List  ${CNC_TRANSPORT}	${item['serviceType']}:${item['serviceName']}:${item['provisioningState']}	
+		END	
+	END 
 	
 	Set Suite Variable  ${CNC_TRANSPORT}	
 
@@ -438,7 +485,6 @@ get-syslog-dest
     ${description}  set variable    ${TEST NAME}
 	@{CNC_SYSLOG_DEST}=    Create List
 
-
     ${myurl}  Set Variable   /crosswork/alarms/v1/syslog-dest/query
 	${payload}	Set Variable	{}
 	${payload_json}	evaluate  json.loads($payload)    json	
@@ -446,11 +492,20 @@ get-syslog-dest
 
     ${json_response}    evaluate  json.loads($response.text)    json
 	
-	FOR  ${item}  IN  @{json_response['data']}
-		Set Test Variable    ${MSG}    ${MSG}\n${item['host']}:${item['port']}:${item['criteria']}
-		Append To List  ${CNC_SYSLOG_DEST}	${item['host']}:${item['port']}:${item['criteria']}	
-	END	
+	Set Test Variable    ${MSG}	--NSO Transport--\n
+	
+	${RESP}  Run Keyword And Ignore Error	Get Length	${json_response['data']} 
+	IF  "${RESP}[0]" == "FAIL"
+		Set Test Variable    ${MSG}    ${MSG}Data Collection failed for Syslog\n
+		fail	Test failed.	
+	ELSE		
+	
+		FOR  ${item}  IN  @{json_response['data']}
+			Set Test Variable    ${MSG}    ${MSG}\n${item['host']}:${item['port']}:${item['criteria']}
+			Append To List  ${CNC_SYSLOG_DEST}	${item['host']}:${item['port']}:${item['criteria']}	
+		END	
 
+	END
 	Set Suite Variable  ${CNC_SYSLOG_DEST}	
 
 
@@ -571,54 +626,46 @@ get-cnc-cdg
 	log	${json_response['data']}
 	Set Test Variable    ${MSG}	--Data Gateways--\n   
 
-	#@{data}    Get Value From Json    ${json_response['CwClusterAndActions']}    $..CwCluster
+	${RESP}  Run Keyword And Ignore Error	Get Length	${json_response['data']} 
+	IF  "${RESP}[0]" == "FAIL"
+		Set Test Variable    ${MSG}    ${MSG}Data Collection failed for Data Gateways\n
+		fail	Test failed.	
+	ELSE		
 	
-	
-	FOR  ${data}  IN  @{json_response['data']} 
-	
-		${cdg}	Get Value From Json    ${data}    $.name
+		FOR  ${data}  IN  @{json_response['data']} 
 		
-		FOR  ${item}  IN  @{FIELDS_CONFIGDATA}
-			${search}	Set Variable 	$.${item}
-			${values}	Get Value From Json    ${data['configData']}    ${search}
-			Set Test Variable    ${MSG}    ${MSG}${cdg}:${item}:${values[0]}\n
-			Append To List  ${CNC_DATAGW}	${cdg}:${item}:${values[0]}
-		END		
+			${cdg}	Get Value From Json    ${data}    $.name
+			
+			FOR  ${item}  IN  @{FIELDS_CONFIGDATA}
+				${search}	Set Variable 	$.${item}
+				${values}	Get Value From Json    ${data['configData']}    ${search}
+				Set Test Variable    ${MSG}    ${MSG}${cdg}:${item}:${values[0]}\n
+				Append To List  ${CNC_DATAGW}	${cdg}:${item}:${values[0]}
+			END		
 
-		FOR  ${item}  IN  @{FIELDS_CONFIGDATA_PROFILE}
-			${search}	Set Variable 	$.${item}
-			${values}	Get Value From Json    ${data['configData']['profile']}    ${search}
-			Set Test Variable    ${MSG}    ${MSG}${cdg}:${item}:${values[0]}\n
-			Append To List  ${CNC_DATAGW}	${cdg}:${item}:${values[0]}
-		END	
+			FOR  ${item}  IN  @{FIELDS_CONFIGDATA_PROFILE}
+				${search}	Set Variable 	$.${item}
+				${values}	Get Value From Json    ${data['configData']['profile']}    ${search}
+				Set Test Variable    ${MSG}    ${MSG}${cdg}:${item}:${values[0]}\n
+				Append To List  ${CNC_DATAGW}	${cdg}:${item}:${values[0]}
+			END	
 
-		FOR  ${item}  IN  @{FIELDS_CONFIGDATA_INTERFACES}
-			${search}	Set Variable 	$..${item}
-			${values}	Get Value From Json    ${data['configData']['interfaces']}    ${search}
-			Set Test Variable    ${MSG}    ${MSG}${cdg}:${item}:${values}\n
-			Append To List  ${CNC_DATAGW}	${cdg}:${item}:${values}
-		END	
+			FOR  ${item}  IN  @{FIELDS_CONFIGDATA_INTERFACES}
+				${search}	Set Variable 	$..${item}
+				${values}	Get Value From Json    ${data['configData']['interfaces']}    ${search}
+				Set Test Variable    ${MSG}    ${MSG}${cdg}:${item}:${values}\n
+				Append To List  ${CNC_DATAGW}	${cdg}:${item}:${values}
+			END	
+			
+			FOR  ${item}  IN  @{FIELDS_OPERDATA}
+				${search}	Set Variable 	$.${item}
+				${values}	Get Value From Json    ${data['operationalData']}    ${search}
+				Append To List  ${CNC_DATAGW_OPER}	${cdg}:${item}:${values[0]}
+			END		
 		
-		FOR  ${item}  IN  @{FIELDS_OPERDATA}
-			${search}	Set Variable 	$.${item}
-			${values}	Get Value From Json    ${data['operationalData']}    ${search}
-			Append To List  ${CNC_DATAGW_OPER}	${cdg}:${item}:${values[0]}
-		END		
+		END 
+	END
 
-		
-		#Set Test Variable    ${MSG}    ${MSG}${CDG["name"]}\n
-		#Append To List  ${CNC_DATAGW}	${CDG["name"]}
-	
-	END 
-	
-	#FOR  ${item}  IN  @{FIELDS_DATA}
-	#	${search}	Set Variable 	$..${item}
-	#	${data}	Get Value From Json    ${json_response['data']}    ${search}
-#
-#		Set Test Variable    ${MSG}    ${MSG}${item}:${data}\n
-#		Append To List  ${CNC_DATAGW}	${item}:${data}
-#		
-#	END 
 
 	Set Suite Variable  ${CNC_DATAGW}	
 	Set Suite Variable  ${CNC_DATAGW_OPER}	
@@ -743,24 +790,27 @@ get-cnc-cdg-pools
 
     ${json_response}    evaluate  json.loads($response.text)    json
 
-	log	${json_response['data']}
 	Set Test Variable    ${MSG}	--Data Gateway Pool(s)--\n   
 
-	FOR  ${data}  IN  @{json_response['data']} 
-	
-		${cdg}	Get Value From Json    ${data}    $.name
+	${RESP}  Run Keyword And Ignore Error	Get Length	${json_response['data']} 
+	IF  "${RESP}[0]" == "FAIL"
+		Set Test Variable    ${MSG}    ${MSG}Data Collection failed for Data Data Gateway Pool(s)\n
+		fail	Test failed.	
+	ELSE
+
+		FOR  ${data}  IN  @{json_response['data']} 
 		
-		FOR  ${item}  IN  @{FIELDS_VIP}
-			${search}	Set Variable 	$..${item}
-			${values}	Get Value From Json    ${data['virtualIPs']}    ${search}
-			Set Test Variable    ${MSG}    ${MSG}${cdg}:${item}:${values}\n
-			Append To List  ${CNC_DATAGW_POOL}	${cdg}:${item}:${values}
-		END		
+			${cdg}	Get Value From Json    ${data}    $.name
+			
+			FOR  ${item}  IN  @{FIELDS_VIP}
+				${search}	Set Variable 	$..${item}
+				${values}	Get Value From Json    ${data['virtualIPs']}    ${search}
+				Set Test Variable    ${MSG}    ${MSG}${cdg}:${item}:${values}\n
+				Append To List  ${CNC_DATAGW_POOL}	${cdg}:${item}:${values}
+			END		
 
-
-	
-	END 
-	
+		END 
+	END
 
 	Set Suite Variable  ${CNC_DATAGW_POOL}	
 
@@ -1007,8 +1057,11 @@ get-cnc-devices
     ${description}  set variable    ${TEST NAME}
 	@{CNC_DEVICES}=    Create List
 	@{CNC_DEVICES_HEALTH}=    Create List
+	@{EXCLUDE_LIST}=    Create List	provider_uuid
 	
-	@{FIELDS_DATA}=	Create List		profile	dg_name	reachability_check	product_info.software_type	product_info.software_version	product_info.manufacturer	connectivity_info..type	connectivity_info..port	connectivity_info..ipaddrs	providers_family
+	@{FIELDS_DATA}=	Create List		profile	dg_name	reachability_check	product_info.software_type	product_info.software_version	product_info.manufacturer	connectivity_info..type	connectivity_info..port	connectivity_info..ipaddrs		
+	@{FIELDS_PROVIDER}=	Create List	provider_node_id	provider_name
+	#..provider_name	providers_family..provider_node_id	providers_family..provider_name
 	@{FIELDS_DATA_HEALTH}=	Create List	admin_state	operational_state	reachability_state	nso_state	errors
 	@{FIELDS_EVENTS}=	Create List	alarm_id
 	
@@ -1021,34 +1074,126 @@ get-cnc-devices
 
     ${json_response}    evaluate  json.loads($response.text)    json
 
-	log	${json_response}
-	
 	Set Test Variable    ${MSG}    --Devices--\n	
-	
-	FOR  ${data}  IN  @{json_response['data']}
-	
-		Log	${data}
-		
-		${key}	Get Value From Json    ${data}    $.host_name
-	
-		FOR  ${item}  IN  @{FIELDS_DATA}
-			${search}	Set Variable 	$.${item}
-			${values}	Get Value From Json    ${data}    ${search}
-			Set Test Variable    ${MSG}    ${MSG}${key}:${item}:${values}\n
-			Append To List  ${CNC_DEVICES}	${key}:${item}:${values}
-		END
-		
-		FOR  ${item}  IN  @{FIELDS_DATA_HEALTH}
-			${search}	Set Variable 	$.${item}
-			${values}	Get Value From Json    ${data}    ${search}
-			#Set Test Variable    ${MSG}    ${MSG}${key}:${item}:${values}\n
-			Append To List  ${CNC_DEVICES_HEALTH}	${key}:${item}:${values}
-		END		
 
-	END	
-	Log List  ${CNC_DEVICES_HEALTH}
+	${RESP}  Run Keyword And Ignore Error	Get Length	${json_response['data']} 
+	IF  "${RESP}[0]" == "FAIL"
+		Set Test Variable    ${MSG}    ${MSG}Devices failed for Devices(s)\n
+		fail	Test failed.	
+	ELSE
+	
+		FOR  ${data}  IN  @{json_response['data']}
+		
+			${key}	Get Value From Json    ${data}    $.host_name
+		
+			FOR  ${item}  IN  @{FIELDS_DATA}
+				${search}	Set Variable 	$.${item}
+				${values}	Get Value From Json    ${data}    ${search}
+				Set Test Variable    ${MSG}    ${MSG}${key}:${item}:${values}\n
+				Append To List  ${CNC_DEVICES}	${key}:${item}:${values}
+			END
+			
+			@{list}=    Create List
+			
+			FOR  ${item}  IN  @{FIELDS_PROVIDER}
+				${search}	Set Variable 	$.providers_family..${item}
+				${values}	Get Value From Json    ${data}    ${search}
+				Append To List  ${list}	${item}:${values}
+
+			END			
+			${convertListToString}=   Evaluate	":".join(${list})
+						
+			Append To List  ${CNC_DEVICES}	${key}:${convertListToString}
+			Set Test Variable    ${MSG}    ${MSG}${key}:${convertListToString}\n
+			
+			
+			FOR  ${item}  IN  @{FIELDS_DATA_HEALTH}
+				${search}	Set Variable 	$.${item}
+				${values}	Get Value From Json    ${data}    ${search}
+				#Set Test Variable    ${MSG}    ${MSG}${key}:${item}:${values}\n
+				Append To List  ${CNC_DEVICES_HEALTH}	${key}:${item}:${values}
+			END		
+
+		END	
+
+	END
+	
+	Set Suite Variable  ${CNC_DEVICES}	
+	Set Suite Variable  ${CNC_DEVICES_HEALTH}
+
+
+get-cnc-devicesx
+	[Documentation]			Retrieves CNC device information from /crosswork/inventory/v1/nodes/query
+	...						\nSuite Variables: ``CNC_DEVICES``
+	...                       
+	...                     \nAuthor: Simon Price
+	...                     \nUpdate: 2024-12-02
+	
+    ${myurl}  Set Variable   status
+	${headers}  Create Dictionary
+	set to dictionary  ${headers}  Content-type=application/json
+	set to dictionary  ${headers}  Authorization=Bearer ${token}
+	
+    ${description}  set variable    ${TEST NAME}
+	@{CNC_DEVICES}=    Create List
+	@{CNC_DEVICES_HEALTH}=    Create List
+	
+	@{FIELDS_DATA}=	Create List		profile	dg_name	reachability_check	product_info.software_type	product_info.software_version	product_info.manufacturer	connectivity_info..type	connectivity_info..port	connectivity_info..ipaddrs	providers_family..provider_name
+	@{FIELDS_DATA_HEALTH}=	Create List	admin_state	operational_state	reachability_state	nso_state	errors
+	@{FIELDS_EVENTS}=	Create List	alarm_id
+	
+    ${myurl}  Set Variable   /crosswork/inventory/v1/nodes/query
+
+	${payload}	Set Variable	{}
+	${payload_json}	evaluate  json.loads($payload)    json
+
+    ${response}   POST On Session  cw  ${myurl}  headers=${headers}	expected_status=200	json=${payload_json}
+
+    ${json_response}    evaluate  json.loads($response.text)    json
+
+	Set Test Variable    ${MSG}    --Devices--\n	
+
+	${RESP}  Run Keyword And Ignore Error	Get Length	${json_response['data']} 
+	IF  "${RESP}[0]" == "FAIL"
+		Set Test Variable    ${MSG}    ${MSG}Data Collection failed for Data Data Gateway Pool(s)\n
+		fail	Test failed.	
+	ELSE
+	
+		FOR  ${data}  IN  @{json_response['data']}
+		
+			Log	${data}
+			
+			${key}	Get Value From Json    ${data}    $.host_name
+			@{TEMP}=    Create List
+		
+			FOR  ${item}  IN  @{FIELDS_DATA}
+				${search}	Set Variable 	$.${item}
+				${values}	Get Value From Json    ${data}    ${search}
+				#Set Test Variable    ${MSG}    ${MSG}${key}:${item}:${values}\n
+				#Append To List  ${CNC_DEVICES}	${key}:${item}:${values}
+				Append To List  ${TEMP}	${key}|${item}:${values}
+			END
+			
+			FOR  ${item}  IN  @{FIELDS_DATA_HEALTH}
+				${search}	Set Variable 	$.${item}
+				${values}	Get Value From Json    ${data}    ${search}
+				#Set Test Variable    ${MSG}    ${MSG}${key}:${item}:${values}\n
+				Append To List  ${CNC_DEVICES_HEALTH}	${key}:${item}:${values}
+			END		
+		Log list 	${TEMP}
+		Append To List  ${CNC_DEVICES}	${TEMP}
+		Log list	${CNC_DEVICES}
+
+		END	
+
+	END
+	Log list 	${CNC_DEVICES}
+
+
 	Set Suite Variable  ${CNC_DEVICES}	
 	Set Suite Variable  ${CNC_DEVICES_HEALTH}	
+	Set Test Variable    ${MSG}    ${MSG}${CNC_DEVICES}\n
+
 	
 validate-cnc-devices
 	[Documentation]			Validates the CNC services/applications based on the suite variable of ``CNC_DEVICES``
@@ -1377,17 +1522,24 @@ get-device-alerts
     ${alerts}    evaluate  json.loads($response.text)    json
 	
 	Set Test Variable    ${MSG}	--CNC Device Alerts--\n
+
+	${RESP}  Run Keyword And Ignore Error	Get Length	${alerts} 
+	IF  "${RESP}[0]" == "FAIL"
+		Set Test Variable    ${MSG}    ${MSG}Data Collection failed for CNC Device Alerts\n
+		fail	Test failed.	
+	ELSE
 		
-	FOR  ${item}  IN  @{alerts['device_alerts']}
-		Log	${item['device_id']}
-		Set Test Variable    ${MSG}    ${MSG}Device:${item['device_id']}:${item['impact_score']}\n	
-		Append To List  ${FAIL_DEVICE}  FAIL_DEVICE		
-	END	
-	FOR  ${item}  IN  @{alerts['kpi_alerts']}
-		Log	${item['device_id']}
-		Set Test Variable    ${MSG}    ${MSG}KPI:${item['device_id']}:${item['impact_score']}\n		
-		Append To List  ${FAIL_KPI}  FAIL_KPI
-	END		
+		FOR  ${item}  IN  @{alerts['device_alerts']}
+			Log	${item['device_id']}
+			Set Test Variable    ${MSG}    ${MSG}Device:${item['device_id']}:${item['impact_score']}\n	
+			Append To List  ${FAIL_DEVICE}  FAIL_DEVICE		
+		END	
+		FOR  ${item}  IN  @{alerts['kpi_alerts']}
+			Log	${item['device_id']}
+			Set Test Variable    ${MSG}    ${MSG}KPI:${item['device_id']}:${item['impact_score']}\n		
+			Append To List  ${FAIL_KPI}  FAIL_KPI
+		END		
+	END
 	
 get-cnc-credentials
 	[Documentation]			Retrieves CNC Credentials
@@ -1413,19 +1565,78 @@ get-cnc-credentials
     ${credentials}    evaluate  json.loads($response.text)    json
 	
 	Set Test Variable    ${MSG}    --CNC Credentials--\n
-	
-	FOR  ${item}  IN  @{credentials['data']}
-		Log	${item}
-		Append To List  ${CNC_CREDENTIALS}	${item['profile']}
-		
-		FOR  ${user}  IN  @{item['user_pass']}
-			Set Test Variable    ${MSG}    ${MSG}${item['profile']}|${user['user_name']}:${user['type']}\n
-			Append To List  ${CNC_CREDENTIALS}	${item['profile']}|${user['user_name']}:${user['type']}
-		END
-		
-		#Set Test Variable    ${MSG}    ${MSG}\n${item['profile']}:${item['user_pass']}:${item['type']}			
 
+	${RESP}  Run Keyword And Ignore Error	Get Length	${credentials['data']} 
+	IF  "${RESP}[0]" == "FAIL"
+		Set Test Variable    ${MSG}    ${MSG}Data Collection failed for CNC Credentials\n
+		fail	Test failed.	
+	ELSE
+	
+		FOR  ${item}  IN  @{credentials['data']}
+			Log	${item}
+			Append To List  ${CNC_CREDENTIALS}	${item['profile']}
+			
+			FOR  ${user}  IN  @{item['user_pass']}
+				Set Test Variable    ${MSG}    ${MSG}${item['profile']}|${user['user_name']}:${user['type']}\n
+				Append To List  ${CNC_CREDENTIALS}	${item['profile']}|${user['user_name']}:${user['type']}
+			END
+			
+			#Set Test Variable    ${MSG}    ${MSG}\n${item['profile']}:${item['user_pass']}:${item['type']}			
+
+		END	
 	END	
+		
+	Set Suite Variable  ${CNC_CREDENTIALS}
+
+
+get-cnc-credentials-v2
+	[Documentation]			Retrieves CNC Credentials
+	...						\nSuite Variables: ``CNC_CREDENTIALS`` 
+	...						\nValidation file(s): none
+	...                     \nAuthor: Simon Price
+	...                     \nUpdate: 2024-12-03
+	
+    ${myurl}  Set Variable   status
+	${headers}  Create Dictionary
+	set to dictionary  ${headers}  Content-type=application/json
+	set to dictionary  ${headers}  Authorization=Bearer ${token}
+	
+    ${description}  set variable    ${TEST NAME}
+	@{CNC_CREDENTIALS}=    Create List	
+	
+	@{FIELDS_DATA}=	Create List	user_name	type
+	
+    ${myurl}  Set Variable   /crosswork/inventory/v1/credentials/query
+	${payload}	Set Variable	{"limit":100,"next_from":"0","filter":{}}
+	${json_payload}	evaluate  json.loads($payload)    json
+	
+    ${response}   POST On Session  cw  ${myurl}  headers=${headers}	json=${json_payload}	expected_status=200
+
+    ${json_response}    evaluate  json.loads($response.text)    json
+	
+	Set Test Variable    ${MSG}    --CNC Credentials--\n
+	
+	${RESP}  Run Keyword And Ignore Error	Get Length	${json_response['data']} 
+	IF  "${RESP}[0]" == "FAIL"
+		Set Test Variable    ${MSG}    ${MSG}Data Collection failed for credentials\n
+		fail	Test failed.
+	ELSE 
+	
+		FOR  ${data}  IN  @{json_response['data']} 
+		
+			${key}  Set Variable   ${data['profile']}
+
+			FOR  ${item}  IN  @{FIELDS_DATA}
+				${search}	Set Variable 	$..${item}
+				${values}	Get Value From Json    ${data}    ${search}
+				Set Test Variable    ${MSG}    ${MSG}${key}|${item} : ${values}\n
+				Append To List  ${CNC_CREDENTIALS}	${key}|${item} : ${values}
+			END		
+			
+		END 	
+
+	END 
+
 	Set Suite Variable  ${CNC_CREDENTIALS}
 
 DEPRECATED-get-cnc-providers
@@ -1494,26 +1705,32 @@ get-cnc-providers
     ${response}   POST On Session  cw  ${myurl}  headers=${headers}	expected_status=200
 
     ${json_response}    evaluate  json.loads($response.text)    json
-	Set Test Variable    ${MSG}	--Providers--\n
+	Set Test Variable    ${MSG}	--CNC Providers--\n
 	
-	FOR  ${data}  IN  @{json_response['data']}
+	${RESP}  Run Keyword And Ignore Error	Get Length	${json_response['data']}
+	IF  "${RESP}[0]" == "FAIL"
+		Set Test Variable    ${MSG}    ${MSG}Data Collection failed for CNC Providers\n
+		fail	Test failed.	
+	ELSE
 	
-		Log	${data}
+		FOR  ${data}  IN  @{json_response['data']}
 		
-		${key}  Set Variable   ${data['name']}
-		
-		FOR  ${item}  IN  @{FIELDS}
-			${search}	Set Variable 	$.${item}
+			Log	${data}
 			
-			${values}	Get Value From Json   ${data}    ${search}
+			${key}  Set Variable   ${data['name']}
+			
+			FOR  ${item}  IN  @{FIELDS}
+				${search}	Set Variable 	$.${item}
+				
+				${values}	Get Value From Json   ${data}    ${search}
 
-			Set Test Variable    ${MSG}    ${MSG}${key}|${item}:${values}\n
-			Append To List  ${CNC_PROVIDERS}	${key}|${item}:${values}
+				Set Test Variable    ${MSG}    ${MSG}${key}|${item}:${values}\n
+				Append To List  ${CNC_PROVIDERS}	${key}|${item}:${values}
+				
+			END 
 			
-		END 
-		
+		END
 	END
-
 	Set Suite Variable  ${CNC_PROVIDERS}	
 
 
@@ -1582,23 +1799,29 @@ get-system-alarms
     ${json_response}    evaluate  json.loads($response.text)    json
 	Set Test Variable    ${MSG}	--CNC System Alarms limit:(${numalarms})--\n
 	
-	FOR  ${data}  IN  @{json_response['alarms']} 
-
-		${key}	Get Value From Json    ${data}    $.State
-		${key3}	Get Value From Json    ${data}    $.AlarmCategory	
-		${key2}	Get Value From Json    ${data}    $.Created			
-		
-		Set Test Variable    ${MSG}    ${MSG}\n--- Alarm | ${key}[0] | ${key3}[0] | ${key2}[0] ---\n
-		
-		FOR  ${item}  IN  @{FIELDS_DATA}
-			${search}	Set Variable 	$.${item}
-			${values}	Get Value From Json    ${data}    ${search}
-			Set Test Variable    ${MSG}    ${MSG}${item} : ${values}\n
-			Append To List  ${CNC_SYSALARMS}	Alarms
-		END		
-		
-	END 
+	${RESP}  Run Keyword And Ignore Error	Get Length	{json_response['alarms']} 
+	IF  "${RESP}[0]" == "FAIL"
+		Set Test Variable    ${MSG}    ${MSG}Data Collection failed for CNC System Alarms\n
+		fail	Test failed.	
+	ELSE	
 	
+		FOR  ${data}  IN  @{json_response['alarms']} 
+
+			${key}	Get Value From Json    ${data}    $.State
+			${key3}	Get Value From Json    ${data}    $.AlarmCategory	
+			${key2}	Get Value From Json    ${data}    $.Created			
+			
+			Set Test Variable    ${MSG}    ${MSG}\n--- Alarm | ${key}[0] | ${key3}[0] | ${key2}[0] ---\n
+			
+			FOR  ${item}  IN  @{FIELDS_DATA}
+				${search}	Set Variable 	$.${item}
+				${values}	Get Value From Json    ${data}    ${search}
+				Set Test Variable    ${MSG}    ${MSG}${item} : ${values}\n
+				Append To List  ${CNC_SYSALARMS}	Alarms
+			END		
+			
+		END 
+	END 
 	Set Suite Variable  ${CNC_SYSALARMS}
 
 
@@ -1624,13 +1847,21 @@ get-device-alarms
 	Should Be True  '${response.status_code}'=='200' or '${response.status_code}'=='206' 
     
 	${alarms}    evaluate  json.loads($response.text)    json
-	
 	Set Test Variable    ${MSG}	--Device Alarms--\n
-	FOR  ${item}  IN  @{alarms}
-		Set Test Variable    ${MSG}    ${MSG}${item['displayName']}|${item['severity']}:${item['eventType']}:${item['srcObjectDisplayName']}\n
-		Append To List  ${CNC_DEVICE_ALARMS}	${item['displayName']}|${item['severity']}:${item['eventType']}:${item['srcObjectDisplayName']}
-	END	
+	
+	${RESP}  Run Keyword And Ignore Error	Get Length	{json_response['alarms']} 
+	IF  "${RESP}[0]" == "FAIL"
+		Set Test Variable    ${MSG}    ${MSG}Data Collection failed for Device Alarms\n
+		fail	Test failed.	
+	ELSE	
 
+		FOR  ${item}  IN  @{alarms}
+			Log	${item}
+			Set Test Variable    ${MSG}    ${MSG}${item['displayName']}|${item['severity']}:${item['eventType']}:${item['source']}:${item['description']}\n
+			Append To List  ${CNC_DEVICE_ALARMS}	${item['displayName']}|${item['severity']}:${item['eventType']}:${item['source']}:${item['description']}
+		END	
+	END 
+	
 	Set Suite Variable  ${CNC_DEVICE_ALARMS}
 
 get-kpis
@@ -1652,16 +1883,83 @@ get-kpis
     ${response}   GET On Session  cw  ${myurl}  headers=${headers}	expected_status=200
 
     ${json_response}    evaluate  json.loads($response.text)    json
-
-	FOR  ${item}  IN  @{json_response['kpis']['kpi']}
-		#Set Test Variable    ${MSG}    ${MSG}\n[${item['category']}] ${item['kpi_name']}:${item['sensor_type']} 
-		Append To List  ${CNC_KPI}	[${item['category']}] ${item['kpi_name']}:${item['sensor_type']} 
-	END	
-
+	
+	${RESP}  Run Keyword And Ignore Error	Get Length	{json_response['kpis']} 
+	IF  "${RESP}[0]" == "FAIL"
+		Set Test Variable    ${MSG}    ${MSG}Data Collection failed for KPIs\n
+		fail	Test failed.	
+	ELSE		
+	
+		FOR  ${item}  IN  @{json_response['kpis']['kpi']}
+			#Set Test Variable    ${MSG}    ${MSG}\n[${item['category']}] ${item['kpi_name']}:${item['sensor_type']} 
+			Append To List  ${CNC_KPI}	[${item['category']}] ${item['kpi_name']}:${item['sensor_type']} 
+		END	
+	END 
+	
 	${NUM_KPI}	Get Length	${CNC_KPI}
 	Set Test Variable    ${MSG}    ${MSG}# KPIs: ${NUM_KPI}
 
 	Set Suite Variable  ${CNC_KPI}	
+
+
+get-cnc-slo
+	[Documentation]			Retrieves CNC Providers (first 100)
+	...						\nSuite Variables: ``CNC_PROVIDERS`` 
+	...						\nValidation file(s): none
+	...                     \nAuthor: Simon Price
+	...                     \nUpdate: 2024-12-03
+	
+	${headers}  Create Dictionary
+	set to dictionary  ${headers}  Content-type=application/json
+	set to dictionary  ${headers}  Authorization=Bearer ${token}
+	
+	${myurl}  Set Variable   /crosswork/cnc/api/v1/getTemplatesByName
+	
+	
+	@{XX}=    Create List
+	@{CNC_NODES_HEALTH}=    Create List	
+	
+	@{FIELDS}=	Create List	policyType	L2-input-policy	L3-input-policy	L2-output-policy	L3-output-policy	forward-plane-policy	
+	
+    ${description}  set variable    ${TEST NAME}
+
+    ${response}   GET On Session  cw  ${myurl}  headers=${headers}	expected_status=200
+
+    ${json_response}    evaluate  json.loads($response.text)    json
+	Set Test Variable    ${MSG}	--CNC Templates--\n
+	
+	${RESP}  Run Keyword And Ignore Error	Get Length	${json_response['data']}
+	IF  "${RESP}[0]" == "FAIL"
+		Set Test Variable    ${MSG}    ${MSG}Data Collection failed for CNC Templates\n
+		fail	Test failed.	
+	ELSE
+	
+		FOR  ${data}  IN  @{json_response['data']}
+		
+			Log	${data}
+			
+			${key}  Set Variable   ${data['id']}
+			@{TEMP}=    Create List
+			
+			FOR  ${item}  IN  @{FIELDS}
+				${search}	Set Variable 	$.${item}
+				
+				${values}	Get Value From Json   ${data}    ${search}
+				Append To List  ${TEMP}	${item}:${values}
+		
+				
+			END 
+			
+			Log list	${TEMP}
+			
+			#Set Test Variable    ${MSG}    ${MSG}${TEMP}\n
+			Append To List  ${XX}	@{TEMP}
+		END
+	END
+	Log list	${XX}
+	Set Test Variable	${XX}
+	Set Suite Variable  ${XX}	
+
 
 get-application-versions
 	[Documentation]			Retrieves the CNC application versions and stores result in suit variabe ``CNC_APP_VERSIONS``
@@ -1683,11 +1981,19 @@ get-application-versions
 
     ${json_response}    evaluate  json.loads($response.text)    json
 	Set Test Variable    ${MSG}	--CNC Application Versions--
-	FOR  ${item}  IN  @{json_response['application_summary_list']}
-		Set Test Variable    ${MSG}    ${MSG}\n${item['application_data']['application_id']}:${item['application_data']['version']}	
-		Append To List  ${CNC_APP_VERSIONS}	${item['application_data']['application_id']}:${item['application_data']['version']}		
-	END	
-
+	
+	${RESP}  Run Keyword And Ignore Error	Get Length	{json_response['application_summary_list']} 
+	IF  "${RESP}[0]" == "FAIL"
+		Set Test Variable    ${MSG}    ${MSG}Data Collection failed for CNC Application Versions\n
+		fail	Test failed.	
+	ELSE		
+	
+		FOR  ${item}  IN  @{json_response['application_summary_list']}
+			Set Test Variable    ${MSG}    ${MSG}\n${item['application_data']['application_id']}:${item['application_data']['version']}	
+			Append To List  ${CNC_APP_VERSIONS}	${item['application_data']['application_id']}:${item['application_data']['version']}		
+		END	
+	END 
+	
 	Set Suite Variable  ${CNC_APP_VERSIONS}	
 
 
@@ -1766,24 +2072,31 @@ get-application-health
 
     ${json_response}    evaluate  json.loads($response.text)    json
 	Set Test Variable    ${MSG}	--CNC Application Health--\n
-	
-	FOR  ${item}  IN  @{json_response['app_health_summary']}
-		
-		${equal}  Run Keyword And Ignore Error	Should Be Equal As Strings	${item['health_summary']['state']}	Healthy
-		
-		IF	"${equal}[0]" == "PASS"
-			Append To List  ${CNC_APP_HEALTHY}	${item['health_summary']['obj_name']}
-			Set Test Variable    ${MSG}    ${MSG}${item['health_summary']['obj_name']}:Healthy\n
-			
-		ELSE 
-			Set Test Variable    ${MSG}    ${MSG}${item['health_summary']['obj_name']}:Degraded\n
-			Append To List  ${CNC_APP_DEGRADED}	${item['health_summary']['obj_name']}		
-		END
-	
-		#Set Test Variable    ${MSG}    ${MSG}\n${item['application_data']['application_id']}:${item['application_data']['version']}	
-		#Append To List  ${CNC_APP_VERSIONS}	${item['application_data']['application_id']}:${item['application_data']['version']}		
-	END	
 
+	${RESP}  Run Keyword And Ignore Error	Get Length	{json_response['app_health_summary']} 
+	IF  "${RESP}[0]" == "FAIL"
+		Set Test Variable    ${MSG}    ${MSG}Data Collection failed for CNC Application Health\n
+		fail	Test failed.	
+	ELSE
+
+		FOR  ${item}  IN  @{json_response['app_health_summary']}
+			
+			${equal}  Run Keyword And Ignore Error	Should Be Equal As Strings	${item['health_summary']['state']}	Healthy
+			
+			IF	"${equal}[0]" == "PASS"
+				Append To List  ${CNC_APP_HEALTHY}	${item['health_summary']['obj_name']}
+				Set Test Variable    ${MSG}    ${MSG}${item['health_summary']['obj_name']}:Healthy\n
+				
+			ELSE 
+				Set Test Variable    ${MSG}    ${MSG}${item['health_summary']['obj_name']}:Degraded\n
+				Append To List  ${CNC_APP_DEGRADED}	${item['health_summary']['obj_name']}		
+			END
+		
+			#Set Test Variable    ${MSG}    ${MSG}\n${item['application_data']['application_id']}:${item['application_data']['version']}	
+			#Append To List  ${CNC_APP_VERSIONS}	${item['application_data']['application_id']}:${item['application_data']['version']}		
+		END	
+	END 
+	
 	Set Suite Variable  ${CNC_APP_DEGRADED}	
 	Set Suite Variable  ${CNC_APP_HEALTHY}	
 

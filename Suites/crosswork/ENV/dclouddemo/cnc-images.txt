@@ -1,6 +1,0 @@
-asr9k-mini-x64-24.2.2.iso|name:['asr9k-mini-x64-24.2.2.iso']
-asr9k-mini-x64-24.2.2.iso|imageName:['asr9k-mini-x64-24.2.2.iso']
-asr9k-mini-x64-24.2.2.iso|version:['24.2.2']
-asr9k-mini-x64-24.2.2.iso|family:['ASR9K_X64']
-asr9k-mini-x64-24.2.2.iso|vendor:['Cisco Systems']
-asr9k-mini-x64-24.2.2.iso|imagePlatform:['IOS XR']

@@ -1,2 +1,0 @@
-L2VPN-Service:demo-l2vpn-tldp:SUCCESS
-L3VPN-Service:vpn-temp-opt:SUCCESS

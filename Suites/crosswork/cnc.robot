@@ -124,7 +124,7 @@ Retrieve CNC Credentials
 	[Tags]  DATA-COLLECTION	CREDENTIALS
 	[setup]    Set Test Variable    ${MSG}    ${EMPTY}    	
 	[teardown]    Set Test Message    ${MSG}\n${TEST MESSAGE}    
-	${RESP}  get-cnc-credentials
+	${RESP}  get-cnc-credentials-v2
 	
 Retrieve CNC KPIs
 	[Documentation]	Find all the configured KPIs by category
@@ -132,7 +132,14 @@ Retrieve CNC KPIs
 	[setup]    Set Test Variable    ${MSG}    ${EMPTY}    	
 	[teardown]    Set Test Message    ${MSG}\n${TEST MESSAGE}    
 	${RESP}  get-kpis
-	
+
+Retrieve CNC SLO Templates (NSST)
+	[Documentation]	Find all Slicing templates
+	[Tags]  DATA-COLLECTION	SLICING
+	[setup]    Set Test Variable    ${MSG}    ${EMPTY}    	
+	[teardown]    Set Test Message    ${MSG}\n${TEST MESSAGE}    
+	${RESP}  get-cnc-slo
+
 Retrieve CNC Versions
 	[Documentation]	Find all the Crosswork modules and versions
 	[Tags]  DATA-COLLECTION	APPLICATIONS

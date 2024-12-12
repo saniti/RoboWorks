@@ -1,2 +1,4 @@
 Suites/crosswork/log.html
 Suites/crosswork/ENV/nbnlab/
+*.html
+*.xml
